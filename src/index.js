@@ -54,19 +54,6 @@ async function init() {
     isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     if (isMobile) {
-        // Request permission for gyroscope on mobile
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission()
-                .then(response => {
-                    if (response == 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation);
-                    }
-                })
-                .catch(console.error);
-        } else {
-            window.addEventListener('deviceorientation', handleOrientation);
-        }
-        
         renderer.domElement.addEventListener('touchstart', handleTouchStart, false);
         renderer.domElement.addEventListener('touchend', () => { isInteracting = false; }, false);
         renderer.domElement.addEventListener('touchmove', handleTouchMove, false);
