@@ -4,6 +4,11 @@ import { createGradient } from './bg.js';
 
 let scene, camera, renderer, gradient, car, angle = 0;
 let isMobile = false;
+let isInteracting = false;
+let lastInteractionTime = 0;
+const interactionTimeout = 1000; // 1 second of inactivity before auto-rotation starts
+
+let lastMouseX, lastMouseY;
 
 function init() {
     scene = new THREE.Scene();
@@ -44,8 +49,19 @@ function init() {
         } else {
             window.addEventListener('deviceorientation', handleOrientation);
         }
+        
+        renderer.domElement.addEventListener('touchstart', handleTouchStart, false);
+        renderer.domElement.addEventListener('touchend', () => { isInteracting = false; }, false);
+        renderer.domElement.addEventListener('touchmove', handleTouchMove, false);
     } else {
         // Add mouse move event listener for desktop
+        window.addEventListener('mousedown', (event) => { 
+            isInteracting = true; 
+            lastInteractionTime = Date.now();
+            lastMouseX = event.clientX;
+            lastMouseY = event.clientY;
+        });
+        window.addEventListener('mouseup', () => { isInteracting = false; });
         window.addEventListener('mousemove', handleMouseMove);
     }
 
@@ -66,11 +82,41 @@ function onWindowResize() {
 }
 
 function handleMouseMove(event) {
-    const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-    const mouseY = (event.clientY / window.innerHeight) * 2 - 1;
+    if (!isInteracting) return;
+
+    const deltaX = event.clientX - lastMouseX;
+    const deltaY = event.clientY - lastMouseY;
+
+    car.rotation.y += deltaX * 0.005;
+    car.rotation.x += deltaY * 0.005;
+
+    // Clamp the vertical rotation to prevent flipping
+    car.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, car.rotation.x));
+
+    lastMouseX = event.clientX;
+    lastMouseY = event.clientY;
+
+    lastInteractionTime = Date.now();
+}
+
+function handleTouchMove(event) {
+    if (!isInteracting) return;
+    event.preventDefault();
     
-    car.rotation.y = mouseX * Math.PI / 2;
-    car.rotation.x = mouseY * Math.PI / 2;
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - lastMouseX;
+    const deltaY = touch.clientY - lastMouseY;
+
+    car.rotation.y += deltaX * 0.005;
+    car.rotation.x += deltaY * 0.005;
+
+    // Clamp the vertical rotation to prevent flipping
+    car.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, car.rotation.x));
+
+    lastMouseX = touch.clientX;
+    lastMouseY = touch.clientY;
+
+    lastInteractionTime = Date.now();
 }
 
 function handleOrientation(event) {
@@ -88,9 +134,21 @@ function animate() {
     angle += 0.01;
     gradient.material.uniforms.uTime.value = angle;
     
-    // Car rotation is now handled by mouse/gyro events
-    
+    const currentTime = Date.now();
+    if (!isInteracting && (currentTime - lastInteractionTime > interactionTimeout)) {
+        // Gentle rotation when not interacting
+        car.rotation.y += 0.005;
+    }
+
     renderer.render(scene, camera);
+}
+
+function handleTouchStart(event) {
+    isInteracting = true;
+    lastInteractionTime = Date.now();
+    const touch = event.touches[0];
+    lastMouseX = touch.clientX;
+    lastMouseY = touch.clientY;
 }
 
 init();
