@@ -5,11 +5,11 @@ import { createGradient } from './bg.js';
 let scene, camera, renderer, gradient, car;
 let isInteracting = false;
 let lastInteractionTime = 0;
-const interactionTimeout = 3000; // 3 seconds of inactivity before auto-rotation starts
+const interactionTimeout = 1000; // 1 second of inactivity before auto-rotation starts
 let lastTouchX, lastTouchY, lastUpdateTime;
 let angularVelocity = new THREE.Vector2(0, 0);
 const friction = 0.95; // Adjust this value to change how quickly the rotation slows down
-const sensitivity = 0.00005; // Adjust this value to change flick sensitivity
+const sensitivity = 0.00008; // Adjust this value to change flick sensitivity
 
 // Detect if the device is mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
