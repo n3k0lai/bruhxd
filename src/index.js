@@ -2,15 +2,17 @@ import * as THREE from 'three';
 import { createCar } from './car.js';
 import { createGradient } from './bg.js';
 
-let scene, camera, renderer, gradient, car, angle = 0;
-let isMobile = false;
+let scene, camera, renderer, gradient, car;
 let isInteracting = false;
 let lastInteractionTime = 0;
-const interactionTimeout = 1000; // 1 second of inactivity before auto-rotation starts
+const interactionTimeout = 3000; // 3 seconds of inactivity before auto-rotation starts
+let lastTouchX, lastTouchY, lastUpdateTime;
+let angularVelocity = new THREE.Vector2(0, 0);
+const friction = 0.95; // Adjust this value to change how quickly the rotation slows down
+const sensitivity = 0.001; // Reduce this value to decrease flick sensitivity
 
-let lastMouseX, lastMouseY;
-
-let isCarLoaded = false;
+// Detect if the device is mobile
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 async function init() {
     scene = new THREE.Scene();
@@ -27,7 +29,6 @@ async function init() {
     try {
         car = await createCar();
         scene.add(car);
-        isCarLoaded = true;
     } catch (error) {
         console.error('Failed to load car model:', error);
     }
@@ -49,9 +50,6 @@ async function init() {
         'pz.jpg', 'nz.jpg'
     ]);
     scene.environment = envMap;
-
-    // Detect if the device is mobile
-    isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     if (isMobile) {
         renderer.domElement.addEventListener('touchstart', handleTouchStart, false);
@@ -104,23 +102,30 @@ function handleMouseMove(event) {
 }
 
 function handleTouchMove(event) {
-    if (!isInteracting) return;
+    if (!isInteracting || !car) return;
     event.preventDefault();
     
     const touch = event.touches[0];
-    const deltaX = touch.clientX - lastMouseX;
-    const deltaY = touch.clientY - lastMouseY;
+    const deltaX = touch.clientX - lastTouchX;
+    const deltaY = touch.clientY - lastTouchY;
+    const currentTime = Date.now();
+    const deltaTime = (currentTime - lastUpdateTime) / 1000; // Convert to seconds
 
+    // Calculate angular velocity
+    angularVelocity.x = deltaY * 0.005 / deltaTime;
+    angularVelocity.y = deltaX * 0.005 / deltaTime;
+
+    // Apply rotation
     car.rotation.y += deltaX * 0.005;
     car.rotation.x += deltaY * 0.005;
 
     // Clamp the vertical rotation to prevent flipping
     car.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, car.rotation.x));
 
-    lastMouseX = touch.clientX;
-    lastMouseY = touch.clientY;
-
-    lastInteractionTime = Date.now();
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
+    lastUpdateTime = currentTime;
+    lastInteractionTime = currentTime;
 }
 
 function handleOrientation(event) {
@@ -135,13 +140,29 @@ function handleOrientation(event) {
 
 function animate() {
     requestAnimationFrame(animate);
-    angle += 0.01;
-    gradient.material.uniforms.uTime.value = angle;
-    
+
     const currentTime = Date.now();
-    if (isCarLoaded && !isInteracting && (currentTime - lastInteractionTime > interactionTimeout)) {
-        // Gentle rotation when not interacting
-        car.rotation.y += 0.005;
+    if (car) {
+        if (!isInteracting) {
+            if (currentTime - lastInteractionTime > interactionTimeout) {
+                // Auto-rotate when not interacting
+                car.rotation.y += 0.005;
+            } else {
+                // Apply momentum
+                car.rotation.y += angularVelocity.y;
+                car.rotation.x += angularVelocity.x;
+
+                // Apply friction
+                angularVelocity.multiplyScalar(friction);
+
+                // Clamp the vertical rotation
+                car.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, car.rotation.x));
+
+                // Stop very small rotations to prevent endless tiny rotations
+                if (Math.abs(angularVelocity.x) < 0.0001) angularVelocity.x = 0;
+                if (Math.abs(angularVelocity.y) < 0.0001) angularVelocity.y = 0;
+            }
+        }
     }
 
     renderer.render(scene, camera);
@@ -151,8 +172,14 @@ function handleTouchStart(event) {
     isInteracting = true;
     lastInteractionTime = Date.now();
     const touch = event.touches[0];
-    lastMouseX = touch.clientX;
-    lastMouseY = touch.clientY;
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
+    lastUpdateTime = Date.now();
+    angularVelocity.set(0, 0);
+}
+
+function handleTouchEnd(event) {
+    isInteracting = false;
 }
 
 init();
