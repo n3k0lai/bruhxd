@@ -9,7 +9,7 @@ const interactionTimeout = 3000; // 3 seconds of inactivity before auto-rotation
 let lastTouchX, lastTouchY, lastUpdateTime;
 let angularVelocity = new THREE.Vector2(0, 0);
 const friction = 0.95; // Adjust this value to change how quickly the rotation slows down
-const sensitivity = 0.001; // Reduce this value to decrease flick sensitivity
+const sensitivity = 0.00005; // Adjust this value to change flick sensitivity
 
 // Detect if the device is mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -111,13 +111,13 @@ function handleTouchMove(event) {
     const currentTime = Date.now();
     const deltaTime = (currentTime - lastUpdateTime) / 1000; // Convert to seconds
 
-    // Calculate angular velocity
-    angularVelocity.x = deltaY * 0.005 / deltaTime;
-    angularVelocity.y = deltaX * 0.005 / deltaTime;
+    // Calculate angular velocity with reduced sensitivity
+    angularVelocity.x = deltaY * sensitivity / deltaTime;
+    angularVelocity.y = deltaX * sensitivity / deltaTime;
 
-    // Apply rotation
-    car.rotation.y += deltaX * 0.005;
-    car.rotation.x += deltaY * 0.005;
+    // Apply rotation with reduced sensitivity
+    car.rotation.y += deltaX * sensitivity;
+    car.rotation.x += deltaY * sensitivity;
 
     // Clamp the vertical rotation to prevent flipping
     car.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, car.rotation.x));
