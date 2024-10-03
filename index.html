@@ -9,107 +9,25 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://bruhxd.com/">
     <meta property="og:title" content="Bruh XD">
-    <meta property="og:description" content="An interactive canvas with a rotating red and gold gradient.">
-    <meta property="og:image" content="https://bruhxd.com/share.jpg">
+    <meta property="og:description" content="Have you _seen_ my car?">
+    <meta property="og:image" content="https://bruhxd.com/assets/share.jpg">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://bruhxd.com/">
     <meta property="twitter:title" content="Rotating Gradient Canvas">
     <meta property="twitter:description" content="An interactive canvas with a rotating red and gold gradient.">
-    <meta property="twitter:image" content="https://bruhxd.com/share.jpg">
+    <meta property="twitter:image" content="https://bruhxd.com/assets/share.jpg">
 
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-        #canvas-container {
-            width: 100vw;
-            height: 100vh;
-        }
-        canvas {
-            display: block;
-        }
-    </style>
+    <link rel="stylesheet" href="./src/styles.css">
 </head>
 <body>
-    <div id="canvas-container">
-        <canvas id="myCanvas"></canvas>
-    </div>
-    <script>
-        const canvas = document.getElementById('myCanvas');
-        const ctx = canvas.getContext('2d');
-        let angle = 0;
-        let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        let carImage = new Image();
-        carImage.src = 'car.png';
-        let rotateX = 0, rotateY = 0;
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-
-        function drawRotatingGradient() {
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const gradient = ctx.createLinearGradient(
-                centerX + Math.cos(angle) * centerX,
-                centerY + Math.sin(angle) * centerY,
-                centerX + Math.cos(angle + Math.PI) * centerX,
-                centerY + Math.sin(angle + Math.PI) * centerY
-            );
-
-            gradient.addColorStop(0, 'red');
-            gradient.addColorStop(1, 'gold');
-
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            if (!isMobile) {
-                angle += 0.01;
-            }
-        }
-
-        function drawCar() {
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-
-            ctx.save();
-            ctx.translate(centerX, centerY);
-            ctx.rotate(rotateY * Math.PI / 180);
-            ctx.scale(1 + rotateX / 1000, 1 + rotateX / 1000);
-            ctx.drawImage(carImage, -carImage.width / 2, -carImage.height / 2);
-            ctx.restore();
-        }
-
-        function animate() {
-            drawRotatingGradient();
-            drawCar();
-            requestAnimationFrame(animate);
-        }
-
-        if (isMobile) {
-            window.addEventListener('deviceorientation', (event) => {
-                let tiltLR = event.gamma;
-                let tiltFB = event.beta;
-                
-                angle = Math.atan2(tiltFB, tiltLR);
-                rotateY = tiltLR * 2;
-                rotateX = tiltFB * 2;
-            });
-        } else {
-            canvas.addEventListener('mousemove', (event) => {
-                rotateY = (event.clientX - canvas.width / 2) / 10;
-                rotateX = (event.clientY - canvas.height / 2) / 10;
-            });
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        carImage.onload = animate;
-    </script>
+    <div id="canvas-container"></div>
+    <a id="github-link" href="https://github.com/n3k0lai" target="_blank" rel="noopener noreferrer">
+        <svg height="32" aria-hidden="true" viewBox="0 0 16 16" version="1.1" width="32" data-view-component="true">
+            <path fill="#FFFFFF" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+        </svg>
+    </a>
+    <script type="module" src="./src/index.js"></script>
 </body>
 </html>

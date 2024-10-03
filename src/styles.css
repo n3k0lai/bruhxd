@@ -1,0 +1,43 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#canvas-container {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+canvas {
+    display: block;
+}
+
+#github-link {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+#github-link:hover {
+    opacity: 1;
+}
+
+#github-link svg {
+    width: 32px;
+    height: 32px;
+}
+
+@media (max-width: 768px) {
+    #github-link svg {
+        width: 48px;
+        height: 48px;
+    }
+}
