@@ -68,5 +68,9 @@ export function createCar() {
         car.add(wheelMesh);
     });
 
+    // Initialize car rotation towards bottom right corner
+    car.rotation.y = -Math.PI / 4; // Rotate 45 degrees around Y-axis
+    car.rotation.x = Math.PI / 12; // Slight tilt downwards
+
     return car;
 }
