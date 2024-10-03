@@ -2,6 +2,8 @@ import * as THREE from 'three';
 
 let scene, camera, renderer, gradient, car, angle = 0;
 let isMobile = false;
+let lastOrientation = { beta: 0, gamma: 0 };
+let animationFrameId;
 
 function init() {
     // Scene setup
@@ -135,16 +137,16 @@ function init() {
             DeviceOrientationEvent.requestPermission()
                 .then(response => {
                     if (response == 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation);
+                        window.addEventListener('deviceorientation', handleOrientation, true);
                     }
                 })
                 .catch(console.error);
         } else {
-            window.addEventListener('deviceorientation', handleOrientation);
+            window.addEventListener('deviceorientation', handleOrientation, true);
         }
     } else {
         // Add mouse move event listener for desktop
-        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mousemove', handleMouseMove, false);
     }
 
     // Handle window resize
@@ -172,17 +174,21 @@ function handleMouseMove(event) {
 }
 
 function handleOrientation(event) {
-    const beta = event.beta;  // X-axis rotation [0,360)
-    const gamma = event.gamma; // Y-axis rotation [-180,180)
+    const beta = event.beta;
+    const gamma = event.gamma;
 
     if (beta !== null && gamma !== null) {
-        car.rotation.x = beta * (Math.PI / 180) / 7.5;
-        car.rotation.y = gamma * (Math.PI / 180) / 7.5;
+        // Apply a low-pass filter to smooth out the movement
+        lastOrientation.beta = lastOrientation.beta * 0.8 + beta * 0.2;
+        lastOrientation.gamma = lastOrientation.gamma * 0.8 + gamma * 0.2;
+
+        car.rotation.x = THREE.MathUtils.degToRad(lastOrientation.beta) / 7.5;
+        car.rotation.y = THREE.MathUtils.degToRad(lastOrientation.gamma) / 7.5;
     }
 }
 
 function animate() {
-    requestAnimationFrame(animate);
+    animationFrameId = requestAnimationFrame(animate);
     angle += 0.01;
     gradient.material.uniforms.uTime.value = angle;
     
@@ -192,3 +198,17 @@ function animate() {
 }
 
 init();
+
+// Clean up function to remove event listeners when the component unmounts
+function cleanup() {
+    cancelAnimationFrame(animationFrameId);
+    window.removeEventListener('resize', onWindowResize);
+    if (isMobile) {
+        window.removeEventListener('deviceorientation', handleOrientation, true);
+    } else {
+        window.removeEventListener('mousemove', handleMouseMove, false);
+    }
+}
+
+// Export the cleanup function if you're using a module system
+export { cleanup };
