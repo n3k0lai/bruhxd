@@ -32,18 +32,9 @@ function init() {
     isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     if (isMobile) {
-        // Request permission for gyroscope on mobile
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission()
-                .then(response => {
-                    if (response == 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation);
-                    }
-                })
-                .catch(console.error);
-        } else {
-            window.addEventListener('deviceorientation', handleOrientation);
-        }
+        // Add touch event listeners for mobile
+        renderer.domElement.addEventListener('touchstart', handleTouchStart, false);
+        renderer.domElement.addEventListener('touchmove', handleTouchMove, false);
     } else {
         // Add mouse move event listener for desktop
         window.addEventListener('mousemove', handleMouseMove);
@@ -73,14 +64,26 @@ function handleMouseMove(event) {
     car.rotation.x = mouseY * Math.PI / 2;
 }
 
-function handleOrientation(event) {
-    const beta = event.beta;  // X-axis rotation [0,360)
-    const gamma = event.gamma; // Y-axis rotation [-180,180)
+// New touch event handlers
+let lastTouchX, lastTouchY;
 
-    if (beta !== null && gamma !== null) {
-        car.rotation.x = beta * (Math.PI / 180) / 7.5;
-        car.rotation.y = gamma * (Math.PI / 180) / 7.5;
-    }
+function handleTouchStart(event) {
+    const touch = event.touches[0];
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
+}
+
+function handleTouchMove(event) {
+    event.preventDefault();
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - lastTouchX;
+    const deltaY = touch.clientY - lastTouchY;
+
+    car.rotation.y += deltaX * 0.01;
+    car.rotation.x += deltaY * 0.01;
+
+    lastTouchX = touch.clientX;
+    lastTouchY = touch.clientY;
 }
 
 function animate() {
