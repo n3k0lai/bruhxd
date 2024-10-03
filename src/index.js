@@ -10,7 +10,9 @@ const interactionTimeout = 1000; // 1 second of inactivity before auto-rotation 
 
 let lastMouseX, lastMouseY;
 
-function init() {
+let isCarLoaded = false;
+
+async function init() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 5;
@@ -22,16 +24,31 @@ function init() {
     gradient = createGradient();
     scene.add(gradient);
 
-    car = createCar();
-    scene.add(car);
+    try {
+        car = await createCar();
+        scene.add(car);
+        isCarLoaded = true;
+    } catch (error) {
+        console.error('Failed to load car model:', error);
+    }
 
-    // Add lighting
+    // Add ambient light
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(5, 5, 5);
+    // Add directional light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 7.5);
     scene.add(directionalLight);
+
+    // Add environment map
+    const envMapLoader = new THREE.CubeTextureLoader();
+    const envMap = envMapLoader.load([
+        'px.jpg', 'nx.jpg',
+        'py.jpg', 'ny.jpg',
+        'pz.jpg', 'nz.jpg'
+    ]);
+    scene.environment = envMap;
 
     // Detect if the device is mobile
     isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -135,7 +152,7 @@ function animate() {
     gradient.material.uniforms.uTime.value = angle;
     
     const currentTime = Date.now();
-    if (!isInteracting && (currentTime - lastInteractionTime > interactionTimeout)) {
+    if (isCarLoaded && !isInteracting && (currentTime - lastInteractionTime > interactionTimeout)) {
         // Gentle rotation when not interacting
         car.rotation.y += 0.005;
     }
