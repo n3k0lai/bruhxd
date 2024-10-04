@@ -114,8 +114,8 @@ function createCar() {
                             child.material = materials.BlackPlastic;
                         } else if (name.includes("back top-down panel")) { // Apply maroon cloth to back top-down panel
                             child.material = materials.MaroonCloth;
-                        } else if (name.includes("")) { // debug material
-                            child.material = materials.DebugMaterial;
+                        //} else if (name.includes("")) { // debug material
+                        //    child.material = materials.DebugMaterial;
                         } else {
                             // Apply DebugMaterial for debugging purposes
                             //child.material = materials.DebugMaterial; // Apply debug material to any other parts
