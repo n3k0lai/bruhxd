@@ -51,10 +51,12 @@ function createCar() {
                         metalness: 1.0,
                         roughness: 0.1,
                     }),
-                    PearlWhite: new THREE.MeshStandardMaterial({
-                        color: 0xf0f0f0, // Light gray for pearl white
-                        metalness: 0.5,
-                        roughness: 0.3,
+                    PearlWhite: new THREE.MeshPhysicalMaterial({
+                        color: 0xffffff, // Bright white color
+                        metalness: 0.1, // Adjusted for a slight sparkle
+                        roughness: 0.2, // Slightly rough for a sparkling effect
+                        clearcoat: 1, // Add clear coat for sparkle
+                        clearcoatRoughness: 0.1, // Low roughness for a shiny effect
                     }),
                     BlackPlastic: new THREE.MeshStandardMaterial({
                         color: 0x222222, // Dark plastic
@@ -71,33 +73,43 @@ function createCar() {
                         metalness: 0,
                         roughness: 0.8, // Adjust roughness for a cloth-like appearance
                     }),
+                    RawMetal: new THREE.MeshStandardMaterial({
+                        color: 0x7f7f7f, // Gray color for raw metal
+                        metalness: 0.9,
+                        roughness: 0.5,
+                    }),
                 };
 
                 // Find and apply materials to specific meshes
                 car.traverse((child) => {
                     if (child.isMesh) {
-                        if (child.name.includes("Glass")) { // Matches any glass-related parts
+                        const name = child.name.toLowerCase(); // Convert name to lower case
+                        if (name.includes("glass")) { // Matches any glass-related parts
                             child.material = materials.Glass;
-                        } else if (child.name.includes("Brake Rotors")) {
+                        } else if (name.includes("brake rotors")) {
                             child.material = materials.RedMetal; // For brake rotors
-                        } else if (child.name.includes("Rims")) {
+                        } else if (name.includes("rims")) {
                             child.material = materials.BlackMetal; // For rims
-                        } else if (child.name.includes("Chrome")) { // Specifically for chrome parts
+                        } else if (name.startsWith("chrom") || name.includes("mirror")) { // Apply chrome material
                             child.material = materials.Chrome;
-                        } else if (child.name.includes("Pearl White")) { // For body parts
+                        } else if (name.includes("body")) { // Apply pearl white to body parts
                             child.material = materials.PearlWhite;
-                        } else if (child.name.includes("Plastic")) { // For plastic parts
-                            if (child.name.includes("Black")) {
+                        } else if (name.includes("plastic")) { // For plastic parts
+                            if (name.includes("black")) {
                                 child.material = materials.BlackPlastic; // For black plastic parts
-                            } else if (child.name.includes("Grey")) {
+                            } else if (name.includes("grey")) {
                                 child.material = materials.GreyPlastic; // For grey plastic parts
                             }
-                        } else if (child.name.includes("Steering Wheel")) { // Apply black plastic to the steering wheel
+                        } else if (name.includes("steering wheel")) { // Apply black plastic to the steering wheel
                             child.material = materials.BlackPlastic;
-                        } else if (child.name.includes("Taillights")) { // Apply red glass to the taillights
+                        } else if (name.includes("taillights")) { // Apply red glass to the taillights
                             child.material = materials.RedGlass;
-                        } else if (child.name.includes("Seat Accents")) { // Apply black cloth to seat accents
+                        } else if (name.includes("seat accents")) { // Apply black cloth to seat accents
                             child.material = materials.BlackCloth;
+                        } else if (name.includes("exhaust")) { // Apply raw metal to exhaust
+                            child.material = materials.RawMetal;
+                        } else if (name.includes("infotainment")) { // Apply black plastic to infotainment
+                            child.material = materials.BlackPlastic;
                         } else {
                             // Default material adjustments for other parts
                             child.material.metalness = 0.4;
