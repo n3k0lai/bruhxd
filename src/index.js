@@ -10,6 +10,7 @@ let lastTouchX, lastTouchY, lastUpdateTime;
 let angularVelocity = new THREE.Vector2(0, 0);
 const friction = 0.95; // Adjust this value to change how quickly the rotation slows down
 const sensitivity = 0.00008; // Adjust this value to change flick sensitivity
+let lastMouseX, lastMouseY;
 
 // Detect if the device is mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -84,7 +85,7 @@ function onWindowResize() {
 }
 
 function handleMouseMove(event) {
-    if (!isInteracting) return;
+    if (!isInteracting || !car) return;
 
     const deltaX = event.clientX - lastMouseX;
     const deltaY = event.clientY - lastMouseY;
