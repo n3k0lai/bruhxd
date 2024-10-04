@@ -73,9 +73,19 @@ function createCar() {
                         metalness: 0,
                         roughness: 0.8, // Adjust roughness for a cloth-like appearance
                     }),
+                    MaroonCloth: new THREE.MeshStandardMaterial({
+                        color: 0x800000, // Maroon color
+                        metalness: 0,
+                        roughness: 0.8, // Adjust roughness for a cloth-like appearance
+                    }),
                     RawMetal: new THREE.MeshStandardMaterial({
-                        color: 0x7f7f7f, // Gray color for raw metal
-                        metalness: 0.9,
+                        color: 0xaaaaaa, // Brighter gray color for raw metal
+                        metalness: 0.9, // Higher metalness for a more reflective surface
+                        roughness: 0.2, // Lower roughness for a shinier effect
+                    }),
+                    DebugMaterial: new THREE.MeshStandardMaterial({
+                        color: 0x00ff00, // Bright green for debugging
+                        metalness: 0.5,
                         roughness: 0.5,
                     }),
                 };
@@ -86,34 +96,29 @@ function createCar() {
                         const name = child.name.toLowerCase(); // Convert name to lower case
                         if (name.includes("glass")) { // Matches any glass-related parts
                             child.material = materials.Glass;
-                        } else if (name.includes("brake rotors")) {
-                            child.material = materials.RedMetal; // For brake rotors
                         } else if (name.includes("rims")) {
                             child.material = materials.BlackMetal; // For rims
                         } else if (name.startsWith("chrom") || name.includes("mirror")) { // Apply chrome material
                             child.material = materials.Chrome;
                         } else if (name.includes("body")) { // Apply pearl white to body parts
                             child.material = materials.PearlWhite;
-                        } else if (name.includes("plastic")) { // For plastic parts
-                            if (name.includes("black")) {
-                                child.material = materials.BlackPlastic; // For black plastic parts
-                            } else if (name.includes("grey")) {
-                                child.material = materials.GreyPlastic; // For grey plastic parts
-                            }
                         } else if (name.includes("steering wheel")) { // Apply black plastic to the steering wheel
                             child.material = materials.BlackPlastic;
-                        } else if (name.includes("taillights")) { // Apply red glass to the taillights
+                        } else if (name.includes("brake light")) { // Apply red glass to the taillights
                             child.material = materials.RedGlass;
-                        } else if (name.includes("seat accents")) { // Apply black cloth to seat accents
+                        } else if (name.includes("seat") || name.includes("floormats")) { // Apply black cloth to seat accents
                             child.material = materials.BlackCloth;
-                        } else if (name.includes("exhaust")) { // Apply raw metal to exhaust
+                        } else if (name.includes("exhaust") || name.includes("base") || name.includes("suspension") || name.includes("rotor") || name.includes("??????")) { // Apply raw metal to exhaust
                             child.material = materials.RawMetal;
-                        } else if (name.includes("infotainment")) { // Apply black plastic to infotainment
+                        } else if (name.includes("infotainment") || name.includes("dashboard")  || name.includes("antannae") || name.includes("shifter")) { // Apply black plastic to infotainment
                             child.material = materials.BlackPlastic;
+                        } else if (name.includes("back top-down panel")) { // Apply maroon cloth to back top-down panel
+                            child.material = materials.MaroonCloth;
+                        } else if (name.includes("")) { // debug material
+                            child.material = materials.DebugMaterial;
                         } else {
-                            // Default material adjustments for other parts
-                            child.material.metalness = 0.4;
-                            child.material.roughness = 0.6;
+                            // Apply DebugMaterial for debugging purposes
+                            //child.material = materials.DebugMaterial; // Apply debug material to any other parts
                         }
                     }
                 });
