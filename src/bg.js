@@ -1,8 +1,28 @@
 import * as THREE from 'three';
 
+let gradient; // Declare gradient variable to access it in the resize function
+
 export function createGradient() {
-    const planeGeometry = new THREE.PlaneGeometry(10, 10);
-    const gradientMaterial = new THREE.ShaderMaterial({
+    const aspectRatio = window.innerWidth / window.innerHeight;
+    const planeGeometry = createPlaneGeometry(aspectRatio);
+    const gradientMaterial = createGradientMaterial();
+
+    gradient = new THREE.Mesh(planeGeometry, gradientMaterial);
+    gradient.position.z = -5; // Moved further back in the scene
+
+    window.addEventListener('resize', debounce(onResize, 1000)); // Debounced resize event
+
+    return gradient;
+}
+
+function createPlaneGeometry(aspectRatio) {
+    const planeWidth = aspectRatio > 1 ? 20 * aspectRatio : 20; // Adjust width for widescreen
+    const planeHeight = aspectRatio > 1 ? 20 : 20 / aspectRatio; // Adjust height for mobile
+    return new THREE.PlaneGeometry(planeWidth, planeHeight);
+}
+
+function createGradientMaterial() {
+    return new THREE.ShaderMaterial({
         uniforms: {
             uTime: { value: 0 },
             uResolution: { value: new THREE.Vector2() }
@@ -29,9 +49,23 @@ export function createGradient() {
             }
         `
     });
+}
 
-    const gradient = new THREE.Mesh(planeGeometry, gradientMaterial);
-    gradient.position.z = -1;
+function onResize() {
+    const aspectRatio = window.innerWidth / window.innerHeight;
+    const newGeometry = createPlaneGeometry(aspectRatio);
+    gradient.geometry.dispose(); // Dispose of the old geometry
+    gradient.geometry = newGeometry; // Update to the new geometry
+}
 
-    return gradient;
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }

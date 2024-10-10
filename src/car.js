@@ -1,12 +1,12 @@
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 
-function createCar() {
+export async function createCar(debugMode) {
     return new Promise((resolve, reject) => {
         const loader = new GLTFLoader();
         
         loader.load(
-            '/car.gltf',  // Note the leading slash
+            '/Miata-mx-5.gltf',  // Note the leading slash
             (gltf) => {
                 const car = gltf.scene;
 
@@ -88,6 +88,10 @@ function createCar() {
                         metalness: 0.5,
                         roughness: 0.5,
                     }),
+                    InvisibleMaterial: new THREE.MeshBasicMaterial({
+                        transparent: true,
+                        opacity: 0, // Fully transparent
+                    }),
                 };
 
                 // Find and apply materials to specific meshes
@@ -112,13 +116,15 @@ function createCar() {
                             child.material = materials.RawMetal;
                         } else if (name.includes("infotainment") || name.includes("dashboard")  || name.includes("antannae") || name.includes("shifter")) { // Apply black plastic to infotainment
                             child.material = materials.BlackPlastic;
+                        } else if (name.includes("backdrop") || name === "floor") { // Apply invisible material to backdrop
+                            child.material = materials.InvisibleMaterial;
                         } else if (name.includes("back top-down panel")) { // Apply maroon cloth to back top-down panel
                             child.material = materials.MaroonCloth;
                         //} else if (name.includes("")) { // debug material
                         //    child.material = materials.DebugMaterial;
-                        } else {
+                        } else if (debugMode) {
                             // Apply DebugMaterial for debugging purposes
-                            //child.material = materials.DebugMaterial; // Apply debug material to any other parts
+                            child.material = materials.DebugMaterial; // Apply debug material to any other parts
                         }
                     }
                 });
@@ -129,6 +135,16 @@ function createCar() {
                 car.rotation.x = Math.PI / 12; // Slight tilt downwards
                 car.scale.set(1, 1, 1); // Adjust scale if needed
                 
+                // Add event listener for mouse wheel to change vehicle size
+                window.addEventListener('wheel', (event) => {
+                    event.preventDefault(); // Prevent default scroll behavior
+                    const scaleChange = event.deltaY > 0 ? -0.1 : 0.1; // Determine scale change direction
+                    car.scale.x += scaleChange; // Adjust scale on x-axis
+                    car.scale.y += scaleChange; // Adjust scale on y-axis
+                    car.scale.z += scaleChange; // Adjust scale on z-axis
+                    car.scale.clampScalar(0.1, 5); // Limit scale to a range (0.1 to 5)
+                });
+
                 resolve(car);
             },
             (xhr) => {
@@ -141,5 +157,3 @@ function createCar() {
         );
     });
 }
-
-export { createCar };

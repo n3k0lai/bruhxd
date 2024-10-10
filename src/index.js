@@ -27,8 +27,12 @@ async function init() {
     gradient = createGradient();
     scene.add(gradient);
 
+    // Check for debug mode in query string
+    const urlParams = new URLSearchParams(window.location.search);
+    const debugMode = urlParams.has('debug');
+
     try {
-        car = await createCar();
+        car = await createCar(debugMode); // Pass debugMode to createCar
         scene.add(car);
     } catch (error) {
         console.error('Failed to load car model:', error);
@@ -42,15 +46,6 @@ async function init() {
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(5, 10, 7.5);
     scene.add(directionalLight);
-
-    // Add environment map
-    const envMapLoader = new THREE.CubeTextureLoader();
-    const envMap = envMapLoader.load([
-        'px.jpg', 'nx.jpg',
-        'py.jpg', 'ny.jpg',
-        'pz.jpg', 'nz.jpg'
-    ]);
-    scene.environment = envMap;
 
     if (isMobile) {
         renderer.domElement.addEventListener('touchstart', handleTouchStart, false);
