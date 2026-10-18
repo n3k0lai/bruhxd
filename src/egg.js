@@ -3,7 +3,7 @@
 const GITHUB = 'https://github.com/n3k0lai';
 // TODO(nicholai): X/Twitter handle wasn't anywhere in the repo or site.
 // Set it here (without the @) to enable the line below.
-const X_HANDLE = null; // e.g. 'yourhandle'
+const X_HANDLE = 'n3k0lai';
 
 export function easterEgg() {
     const big = 'font: 900 28px system-ui, sans-serif; color: #fff; background: linear-gradient(90deg,#ff0000,#ffd700); padding: 6px 14px; border-radius: 4px;';
