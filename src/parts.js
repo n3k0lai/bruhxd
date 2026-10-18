@@ -22,8 +22,9 @@ import { PropertyBinding } from 'three';
 export const PARTS = [
     // ── exterior ──────────────────────────────────────────────
     { id: 'body', label: 'Body panels', category: 'exterior',
-      meshes: ['Body kit', 'Body kit -- Internal'], material: 'PearlWhite', anchor: [1.0, 0.45, 0.05],
-      notes: 'Pearl white paint (Mazda Snowflake White Pearl Mica, 25D, confirm on the door-jamb label). Single mesh: hood, fenders, doors, trunk lid, bumpers.' },
+      meshes: ['Body kit', 'Body kit -- Internal'], material: 'MiiaSilver', anchor: [1.0, 0.45, 0.05],
+      notes: 'Light muted silver with a pearl shimmer (possibly Mazda Ceramic Metallic, unconfirmed; check the paint code on the door-jamb label). Single mesh: hood, fenders, doors, trunk lid, bumpers.',
+      changed: 'Was PearlWhite (bright white). Retuned to MiiaSilver to match the real paint.' },
     { id: 'soft-top', label: 'Soft top (stowed)', category: 'exterior',
       meshes: ['Soft Top'], material: null, anchor: [0, 0.75, -0.42], notes: 'Manual cloth top, folded.' },
     { id: 'wind-blocker', label: 'Wind blocker (between roll hoops)', category: 'interior',
@@ -35,9 +36,9 @@ export const PARTS = [
       meshes: ['Glass Windshield Trim'], material: 'BlackPlastic', anchor: null, notes: '',
       changed: 'Was caught by the "glass" rule and rendered as clear glass; it is the black A-pillar/header trim.' },
     { id: 'mirrors', label: 'Mirrors', category: 'exterior',
-      meshes: ['Side & Rearvide Mirrors'], material: 'PearlWhite', anchor: [1.0, 0.66, 0.2],
+      meshes: ['Side & Rearvide Mirrors'], material: 'MiiaSilver', anchor: [1.0, 0.66, 0.2],
       notes: 'Side mirrors and interior rear-view mirror share one mesh.',
-      changed: 'Was chrome. ND mirror caps are body colour. Interior mirror shares the mesh, so it is pearl too until the mesh is split.' },
+      changed: 'Was chrome. ND mirror caps are body colour. Interior mirror shares the mesh, so it is body colour too until the mesh is split.' },
     { id: 'grille', label: 'Grille, vents & radiator', category: 'exterior',
       meshes: ['Vents / Grills', 'Front Grill Corner Accents', 'Radiator'], material: 'BlackPlastic', anchor: [0, 0.28, 1.0],
       notes: 'Upper grille, corner intakes, radiator face.',
