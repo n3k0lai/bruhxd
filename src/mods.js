@@ -14,14 +14,18 @@ import { BG_DEFAULT } from './bg.js';
 //   ?led[=on|off|<preset>|<hex>]       LED strip under the bar (only shown with the bar)
 //   ?bg=<hex>,<hex>                    background gradient stops (default ff0000,ffd600)
 //   ?floor[=on|off]                    outlined 0.5 m grid on the ground plane
+//   ?kit[=on|off]                      widebody mock-up (Rocket Bunny / Pandem ND approximation)
+//   ?rivets=off                        hide the flare rivets
+//   ?spoiler=duck|lip|wing             spoiler mock-up (default none)
 //
 // Colours are preset keys (rollbar.js) or hex without the '#', e.g. ?rollbar=d3101b.
 
 export const STOCK = Object.freeze({
     rollbar: false, hoops: true, shielding: true, color: BAR_DEFAULT, led: false, ledColor: LED_DEFAULT,
-    bg: BG_DEFAULT, floor: false,
+    bg: BG_DEFAULT, floor: false, kit: false, rivets: true, spoiler: 'none',
 });
-const PARAMS = ['mock', 'rollbar', 'hoops', 'shielding', 'led', 'bg', 'floor'];
+const PARAMS = ['mock', 'rollbar', 'hoops', 'shielding', 'led', 'bg', 'floor', 'kit', 'rivets', 'spoiler'];
+const SPOILER_KINDS = ['none', 'duck', 'lip', 'wing'];
 const HEX6 = /^(?:#|0x)?([0-9a-f]{6})$/i;
 const sameBg = (a, b) => a[0] === b[0] && a[1] === b[1];
 
@@ -56,6 +60,12 @@ export function stateFromParams(params) {
     if (bg.length === 2 && bg.every(Boolean)) s.bg = bg;
     const floor = flagged('floor');
     if (floor !== undefined) s.floor = floor;
+    const kit = flagged('kit');
+    if (kit !== undefined) s.kit = kit;
+    const rivets = flagged('rivets');
+    if (rivets !== undefined) s.rivets = rivets;
+    const sp = (params.get('spoiler') ?? '').toLowerCase();
+    if (SPOILER_KINDS.includes(sp)) s.spoiler = sp;
     return s;
 }
 
@@ -68,6 +78,9 @@ export function writeParams(state, url) {
     if (state.led) q.set('led', state.ledColor === LED_DEFAULT ? 'on' : state.ledColor);
     if (!sameBg(state.bg, BG_DEFAULT)) q.set('bg', state.bg.join(','));
     if (state.floor) q.set('floor', 'on');
+    if (state.kit) q.set('kit', 'on');
+    if (!state.rivets) q.set('rivets', 'off');
+    if (state.spoiler !== 'none') q.set('spoiler', state.spoiler);
     return url;
 }
 
@@ -81,13 +94,15 @@ export function createMods(car, initial = STOCK, scene = {}) {
         for (const p of car.parts.values()) {
             if (!p.mod) continue;
             const on = !!state[p.mod];
-            if (p.mod === 'rollbar') continue;
+            if (p.generated) continue; // generated parts are driven below
             p.objects.forEach((o) => { o.visible = on; });
         }
         car.rollbar.group.visible = state.rollbar;
         car.rollbar.setColor(state.color);
         car.rollbar.setLed(state.rollbar && state.led, state.ledColor);
         car.floor.visible = state.floor;
+        car.body.setKit(state.kit, { rivets: state.rivets });
+        car.body.setSpoiler(state.spoiler);
         scene.setBackground?.(state.bg);
     }
 
@@ -98,6 +113,7 @@ export function createMods(car, initial = STOCK, scene = {}) {
         if ('rollbar' in patch && !('hoops' in patch)) next.hoops = !next.rollbar;
         if ('color' in patch) next.color = colorKey(patch.color, BAR_PRESETS) ?? state.color;
         if ('ledColor' in patch) next.ledColor = colorKey(patch.ledColor, LED_PRESETS) ?? state.ledColor;
+        if ('spoiler' in patch && !SPOILER_KINDS.includes(next.spoiler)) next.spoiler = state.spoiler;
         if ('bg' in patch) {
             const bg = (patch.bg ?? BG_DEFAULT).map((c) => String(c).match(HEX6)?.[1].toLowerCase());
             next.bg = bg.length === 2 && bg.every(Boolean) ? bg : state.bg;

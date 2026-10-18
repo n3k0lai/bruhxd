@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { createPalette } from './materials.js';
 import { PARTS, PART_BY_MESH, meshKey } from './parts.js';
 import { createRollbar } from './rollbar.js';
+import { createBodyKit } from './body.js';
 
 // Ride-height correction: how far the body sits lower than the source model, in
 // metres (negative raises it). 0 = the glTF as exported. Miia is on the stock
@@ -183,11 +184,14 @@ export async function createCar(debugMode) {
         }
     }
 
+    // Body mock-ups (widebody, spoilers); built lazily when first switched on.
+    const body = createBodyKit(model, palette);
+
     const fit = new THREE.Group();
     fit.add(model);
     const pivot = new THREE.Group();
     pivot.add(fit);
     pivot.rotation.y = -Math.PI / 4; // original pose: 45° three-quarter view
     pivot.rotation.x = Math.PI / 12; // slight downward tilt
-    return { pivot, fit, model, parts, rollbar, floor, box, radius: box.getBoundingSphere(new THREE.Sphere()).radius };
+    return { pivot, fit, model, parts, rollbar, floor, body, box, radius: box.getBoundingSphere(new THREE.Sphere()).radius };
 }

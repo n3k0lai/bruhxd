@@ -25,6 +25,14 @@ import { PropertyBinding } from 'three';
 //   mod       menu toggle that shows/hides the part (mods.js)
 //   changed   why the material differs from the original site, if it does
 
+// Per-wheel carve boxes for a merged wheel mesh (all four wheels share one
+// mesh), so the widebody mock-up can push each wheel out on its own.
+const quadrants = (from) => [['FL', 1, 1], ['FR', -1, 1], ['RL', 1, -1], ['RR', -1, -1]].map(([k, sx, sz]) => ({
+    from, name: `${from}-${k}`,
+    min: [sx > 0 ? 0 : -2, -1, sz > 0 ? 0 : -3], max: [sx > 0 ? 2 : 0, 2, sz > 0 ? 3 : 0],
+}));
+const wheelMeshes = (from) => [from, ...['FL', 'FR', 'RL', 'RR'].map((k) => `${from}-${k}`)];
+
 export const PARTS = [
     // ── exterior ──────────────────────────────────────────────
     { id: 'body', label: 'Body panels', category: 'exterior',
@@ -79,16 +87,16 @@ export const PARTS = [
 
     // ── wheels & chassis ─────────────────────────────────────
     { id: 'wheels', label: 'Wheels (BBS forged, black)', category: 'wheels',
-      meshes: ['Rims'], material: 'BBSBlack', anchor: [1.0, 0.22, 0.7],
+      meshes: wheelMeshes('Rims'), carve: quadrants('Rims'), material: 'BBSBlack', anchor: [1.0, 0.22, 0.7],
       notes: 'BBS 17in forged wheels in black (Brembo/BBS package). All four share one mesh; the spoke design is the source model\'s, not the BBS pattern.',
       changed: 'Was BlackMetal (mirror-finish black); now satin-gloss forged black.' },
     { id: 'calipers', label: 'Brembo calipers', category: 'wheels',
       meshes: [], generated: true, material: 'BremboRed', anchor: [1.0, 0.24, 0.5],
       notes: 'Bright red Brembo 4-piston fronts, smaller red rears. Not in the source model: car.js adds simple arc-shaped stand-ins at each rotor (front larger than rear).' },
     { id: 'tyres', label: 'Tyres', category: 'wheels',
-      meshes: ['Tyres'], material: null, anchor: null, notes: '' },
+      meshes: wheelMeshes('Tyres'), carve: quadrants('Tyres'), material: null, anchor: null, notes: '' },
     { id: 'brakes', label: 'Brake rotors', category: 'wheels',
-      meshes: ['Brake Rotors'], material: 'RawMetal', anchor: null, notes: 'Discs only; the model has no caliper geometry (see calipers).' },
+      meshes: wheelMeshes('Brake Rotors'), carve: quadrants('Brake Rotors'), material: 'RawMetal', anchor: null, notes: 'Discs only; the model has no caliper geometry (see calipers).' },
     { id: 'suspension', label: 'Suspension', category: 'chassis',
       meshes: ['Suspension'], material: 'RawMetal', anchor: null,
       notes: 'Stock Bilstein dampers on the real car. The model has stock hub/knuckle geometry only; ride height can be corrected in car.js (STANCE_DROP_M, currently 0) by moving the body over the wheels. See docs/CALIBRATION.md.' },
@@ -145,6 +153,14 @@ export const PARTS = [
                    'Controls 1': 'BlackPlastic', 'Accent Trimming': 'BlackPlastic',
                    'Door Internal Panels': 'BlackPlastic', 'Door Armrest': 'Alcantara', 'Small Details': 'BlackPlastic', 'Internal Cabin': 'BlackPlastic',
                    'Trimming 2': 'BlackPlastic', 'Internal chromatic parts': 'Chrome', 'Additional Chromatic Accents': 'Chrome' } },
+
+    // ── body mock-ups (generated, approximations; see body.js) ──
+    { id: 'widebody', label: 'Widebody kit (mock-up)', category: 'exterior',
+      meshes: [], generated: true, material: null, anchor: null, mod: 'kit',
+      notes: 'Approximation of the Rocket Bunny / Pandem ND V2 kit: front lip, +40 mm front and +80 mm rear bolt-on over-fenders with exposed rivets, rear diffuser, plus a slim sill extension. Wheels pushed out to fill the flares. Procedural, eyeballed from photos.' },
+    { id: 'spoiler', label: 'Spoiler (mock-up)', category: 'exterior',
+      meshes: [], generated: true, material: null, anchor: null, mod: 'spoiler',
+      notes: 'Approximations: Rocket Bunny-style ducktail, small trunk lip, or a GT wing on uprights.' },
 
     // ── scenery from the source .blend (hidden) ──────────────
     { id: 'scenery', label: 'Studio floor & backdrop', category: 'scenery',

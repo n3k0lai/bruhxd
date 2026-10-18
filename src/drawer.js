@@ -1,5 +1,6 @@
 import { BAR_PRESETS, LED_PRESETS, FAVORITES } from './rollbar.js';
 import { colorHex } from './mods.js';
+import { SPOILERS } from './body.js';
 
 // Hamburger menu + slide-out drawer of car toggles, driven by mods.js.
 // Plain DOM over the canvas: pointer events on the menu never reach the
@@ -21,6 +22,23 @@ export function createDrawer({ container, mods }) {
     const ledToggle = toggle('LED strip', 'under the bar');
     const ledColor = swatches('LED colour', LED_PRESETS, (v) => mods.set({ ledColor: v }));
     const reset = el('button', { type: 'button', class: 'reset' }, 'Reset to stock');
+
+    // Body: widebody kit + spoiler selector (approximations, see body.js).
+    const kitToggle = toggle('Widebody kit', 'Rocket Bunny / Pandem ND (approx.)');
+    const rivetToggle = toggle('Flare rivets', 'exposed black rivets');
+    const spoilerBox = el('fieldset', { class: 'segmented' });
+    spoilerBox.append(el('legend', {}, 'Spoiler'));
+    const segRow = el('div', { class: 'seg' });
+    const segButtons = Object.entries(SPOILERS).map(([key, label]) => {
+        const b = el('button', { type: 'button', 'aria-pressed': 'false' }, label);
+        b.dataset.key = key;
+        b.addEventListener('click', () => mods.set({ spoiler: key }));
+        segRow.append(b);
+        return b;
+    });
+    spoilerBox.append(segRow);
+    kitToggle.input.addEventListener('change', () => mods.set({ kit: kitToggle.input.checked }));
+    rivetToggle.input.addEventListener('change', () => mods.set({ rivets: rivetToggle.input.checked }));
 
     // Scene: floor grid and background gradient stops.
     const sceneHead = el('h3', {}, 'Scene');
@@ -57,6 +75,7 @@ export function createDrawer({ container, mods }) {
 
     const body = el('div', { class: 'body' });
     body.append(el('h3', {}, 'Car'), toggles.rollbar.row, toggles.hoops.row, toggles.shielding.row, barColor.box, ledToggle.row, ledColor.box,
+        el('h3', {}, 'Body'), kitToggle.row, rivetToggle.row, spoilerBox,
         sceneHead, floorToggle.row, bgBox, reset);
     drawer.append(head, body);
     container.append(btn, drawer);
@@ -85,6 +104,11 @@ export function createDrawer({ container, mods }) {
         for (const [key, t] of Object.entries(toggles)) t.input.checked = !!s[key];
         ledToggle.input.checked = !!s.led;
         floorToggle.input.checked = !!s.floor;
+        kitToggle.input.checked = !!s.kit;
+        rivetToggle.input.checked = !!s.rivets;
+        rivetToggle.input.disabled = !s.kit;
+        rivetToggle.row.classList.toggle('disabled', !s.kit);
+        segButtons.forEach((b) => { const on = b.dataset.key === s.spoiler; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
         s.bg.forEach((c, i) => {
             const { input, wrap, favButtons } = bgInputs[i];
             input.value = '#' + c;
