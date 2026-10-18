@@ -1,181 +1,131 @@
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { createCar } from './car.js';
 import { createGradient } from './bg.js';
+import { createControls } from './controls.js';
+import { createHotspots } from './hotspots.js';
+import { easterEgg } from './egg.js';
 
-let scene, camera, renderer, gradient, car;
-let isInteracting = false;
-let lastInteractionTime = 0;
-const interactionTimeout = 1000; // 1 second of inactivity before auto-rotation starts
-let lastTouchX, lastTouchY, lastUpdateTime;
-let angularVelocity = new THREE.Vector2(0, 0);
-const friction = 0.95; // Adjust this value to change how quickly the rotation slows down
-const sensitivity = 0.00008; // Adjust this value to change flick sensitivity
-let lastMouseX, lastMouseY;
+const params = new URLSearchParams(window.location.search);
+const debugMode = params.has('debug');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Detect if the device is mobile
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
 
-async function init() {
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
+const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // sharp on the Fold without 3x fill cost
+renderer.setSize(window.innerWidth, window.innerHeight);
+container.appendChild(renderer.domElement);
 
-    renderer = new THREE.WebGLRenderer({ alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
+// Studio reflections so the pearl clearcoat, chrome and glass read as such
+// (without an environment map PBR materials go flat grey).
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.6;
 
-    gradient = createGradient();
-    scene.add(gradient);
+const gradient = createGradient();
+scene.add(gradient);
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+sun.position.set(5, 10, 7.5);
+scene.add(sun);
 
-    // Check for debug mode in query string
-    const urlParams = new URLSearchParams(window.location.search);
-    const debugMode = urlParams.has('debug');
+let car = null, controls = null, hotspots = null, selected = null;
+const raycaster = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
 
-    try {
-        car = await createCar(debugMode); // Pass debugMode to createCar
-        scene.add(car);
-    } catch (error) {
-        console.error('Failed to load car model:', error);
-    }
-
-    // Add ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    // Add directional light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 10, 7.5);
-    scene.add(directionalLight);
-
-    if (isMobile) {
-        renderer.domElement.addEventListener('touchstart', handleTouchStart, false);
-        renderer.domElement.addEventListener('touchend', () => { isInteracting = false; }, false);
-        renderer.domElement.addEventListener('touchmove', handleTouchMove, false);
-    } else {
-        // Add mouse move event listener for desktop
-        window.addEventListener('mousedown', (event) => { 
-            isInteracting = true; 
-            lastInteractionTime = Date.now();
-            lastMouseX = event.clientX;
-            lastMouseY = event.clientY;
-        });
-        window.addEventListener('mouseup', () => { isInteracting = false; });
-        window.addEventListener('mousemove', handleMouseMove);
-    }
-
-    // Handle window resize
-    window.addEventListener('resize', onWindowResize, false);
-    onWindowResize();
-
-    // Start animation
-    animate();
+function fitCar() {
+    if (!car) return;
+    // Scale so the car's bounding sphere fills part of the narrower view axis.
+    const vFov = THREE.MathUtils.degToRad(camera.fov);
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+    const visibleHalf = Math.tan(Math.min(vFov, hFov) / 2) * camera.position.z;
+    // Portrait phones: use nearly the full width (the sphere already leaves room
+    // to spin without clipping). Landscape: keep the original's smaller look.
+    const fill = camera.aspect < 1 ? 0.85 : 0.62;
+    car.fit.scale.setScalar((visibleHalf * fill) / car.radius);
 }
 
-function onWindowResize() {
-    const aspect = window.innerWidth / window.innerHeight;
-    camera.aspect = aspect;
+function onResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     gradient.material.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+    fitCar();
 }
 
-function handleMouseMove(event) {
-    if (!isInteracting || !car) return;
+// ── part selection / mockup API ─────────────────────────────
+function partMeshes(id) { return car?.parts.get(id)?.objects ?? []; }
 
-    const deltaX = event.clientX - lastMouseX;
-    const deltaY = event.clientY - lastMouseY;
-
-    car.rotation.y += deltaX * 0.005;
-    car.rotation.x += deltaY * 0.005;
-
-    // Clamp the vertical rotation to prevent flipping
-    car.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, car.rotation.x));
-
-    lastMouseX = event.clientX;
-    lastMouseY = event.clientY;
-
-    lastInteractionTime = Date.now();
+function select(id) {
+    if (selected) partMeshes(selected).forEach((m) => m.material.emissive?.setHex(0x000000));
+    selected = id && car.parts.has(id) ? id : null;
+    if (selected) partMeshes(selected).forEach((m) => m.material.emissive?.setHex(0x6a4a00));
+    hotspots?.showPanel(selected ? car.parts.get(selected) : null);
+    if (controls) controls.paused = !!selected; // stop auto-spin while reading a part
+    const url = new URL(window.location);
+    selected ? url.searchParams.set('part', selected) : url.searchParams.delete('part');
+    history.replaceState(null, '', url);
 }
 
-function handleTouchMove(event) {
-    if (!isInteracting || !car) return;
-    event.preventDefault();
-    
-    const touch = event.touches[0];
-    const deltaX = touch.clientX - lastTouchX;
-    const deltaY = touch.clientY - lastTouchY;
-    const currentTime = Date.now();
-    const deltaTime = (currentTime - lastUpdateTime) / 1000; // Convert to seconds
-
-    // Calculate angular velocity with reduced sensitivity
-    angularVelocity.x = deltaY * sensitivity / deltaTime;
-    angularVelocity.y = deltaX * sensitivity / deltaTime;
-
-    // Apply rotation with reduced sensitivity
-    car.rotation.y += deltaX * sensitivity;
-    car.rotation.x += deltaY * sensitivity;
-
-    // Clamp the vertical rotation to prevent flipping
-    car.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, car.rotation.x));
-
-    lastTouchX = touch.clientX;
-    lastTouchY = touch.clientY;
-    lastUpdateTime = currentTime;
-    lastInteractionTime = currentTime;
+function pick(e) {
+    if (!car) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+    const hit = raycaster.intersectObject(car.model, true).find((h) => h.object.visible && h.object.userData.partId);
+    select(hit ? hit.object.userData.partId : null);
 }
 
-function handleOrientation(event) {
-    const beta = event.beta;  // X-axis rotation [0,360)
-    const gamma = event.gamma; // Y-axis rotation [-180,180)
+const api = {
+    get parts() { return car ? [...car.parts.values()].map(({ objects, anchorLocal, ...p }) => p) : []; },
+    select,
+    setColor(id, hex) { partMeshes(id).forEach((m) => m.material.color?.set(hex)); },
+    setVisible(id, on) { partMeshes(id).forEach((m) => { m.visible = on; }); },
+    reset(id) {
+        const ids = id ? [id] : [...car.parts.keys()];
+        ids.forEach((pid) => partMeshes(pid).forEach((m) => { m.material.copy(m.userData.baseMaterial); m.visible = true; }));
+        if (selected) select(selected);
+    },
+    toggleHotspots(on = !hotspots?.visible) { hotspots?.setVisible(on); },
+    debugState: () => ({ ...controls?.state(), selected, hotspots: hotspots?.visible ?? false }),
+};
+window.__bruhxd = api;
 
-    if (beta !== null && gamma !== null) {
-        car.rotation.x = beta * (Math.PI / 180) / 7.5;
-        car.rotation.y = gamma * (Math.PI / 180) / 7.5;
+async function init() {
+    window.addEventListener('resize', onResize);
+    onResize();
+    easterEgg();
+    try {
+        car = await createCar(debugMode);
+        scene.add(car.pivot);
+        fitCar();
+        controls = createControls(renderer.domElement, car.pivot, { onTap: (e) => (hotspots?.visible || selected) && pick(e) });
+        hotspots = createHotspots({ container: document.body, camera, car, onSelect: select });
+        if (params.has('parts')) hotspots.setVisible(true);
+        if (params.get('parts') === 'labels') hotspots.setLabels(true);
+        if (params.get('part')) { hotspots.setVisible(true); select(params.get('part')); }
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'p') api.toggleHotspots();
+            if (e.key === 'Escape') select(null);
+        });
+    } catch (error) {
+        console.error('Failed to load car model:', error);
     }
+    renderer.setAnimationLoop(animate);
 }
 
-function animate() {
-    requestAnimationFrame(animate);
-
-    const currentTime = Date.now();
-    if (car) {
-        if (!isInteracting) {
-            if (currentTime - lastInteractionTime > interactionTimeout) {
-                // Auto-rotate when not interacting
-                car.rotation.y += 0.005;
-            } else {
-                // Apply momentum
-                car.rotation.y += angularVelocity.y;
-                car.rotation.x += angularVelocity.x;
-
-                // Apply friction
-                angularVelocity.multiplyScalar(friction);
-
-                // Clamp the vertical rotation
-                car.rotation.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, car.rotation.x));
-
-                // Stop very small rotations to prevent endless tiny rotations
-                if (Math.abs(angularVelocity.x) < 0.0001) angularVelocity.x = 0;
-                if (Math.abs(angularVelocity.y) < 0.0001) angularVelocity.y = 0;
-            }
-        }
-    }
-
+let lastT = performance.now();
+function animate(now) {
+    const dt = Math.min(0.05, (now - lastT) / 1000);
+    lastT = now;
+    if (!reduceMotion) gradient.material.uniforms.uTime.value += dt;
+    controls?.update(dt, now);
     renderer.render(scene, camera);
-}
-
-function handleTouchStart(event) {
-    isInteracting = true;
-    lastInteractionTime = Date.now();
-    const touch = event.touches[0];
-    lastTouchX = touch.clientX;
-    lastTouchY = touch.clientY;
-    lastUpdateTime = Date.now();
-    angularVelocity.set(0, 0);
-}
-
-function handleTouchEnd(event) {
-    isInteracting = false;
+    hotspots?.update(window.innerWidth, window.innerHeight);
 }
 
 init();

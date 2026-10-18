@@ -2,11 +2,15 @@ body, html {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    background: #000;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 #canvas-container {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     position: fixed;
     top: 0;
     left: 0;
@@ -14,30 +18,79 @@ body, html {
 
 canvas {
     display: block;
+    touch-action: none;
 }
 
-#github-link {
+/* ── part hotspots (?parts or press "p") ─────────────────── */
+#hotspots {
     position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
+    inset: 0;
+    pointer-events: none;
+    display: none;
+    font: 12px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
 }
+#hotspots.on { display: block; }
 
-#github-link:hover {
-    opacity: 1;
+.hotspot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: -7px 0 0 -7px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: none;
+    will-change: transform;
+    transition: opacity 0.12s linear;
 }
+.hotspot .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #000;
+    border: 2px solid #ffd700;
+    box-sizing: border-box;
+    flex: none;
+}
+.hotspot .label {
+    background: #000;
+    padding: 3px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+.hotspot .label { display: none; }
+.hotspot.selected .label,
+#hotspots.labels .hotspot .label { display: block; }
+@media (hover: hover) { .hotspot:hover .label { display: block; } }
+.hotspot.selected .dot { background: #ffd700; }
+.hotspot.selected .label { color: #ffd700; }
+.hotspot.behind { opacity: 0; pointer-events: none; }
 
-#github-link svg {
-    width: 32px;
-    height: 32px;
+#part-panel {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 12px 14px;
+    background: #000;
+    color: #ddd;
+    border: 1px solid #333;
+    border-radius: 8px;
+    font: 13px/1.4 system-ui, sans-serif;
+    z-index: 10;
 }
-
-@media (max-width: 768px) {
-    #github-link svg {
-        width: 48px;
-        height: 48px;
-    }
-}
+#part-panel[hidden] { display: none; }
+#part-panel h2 { margin: 0 0 2px; font-size: 16px; color: #fff; }
+#part-panel p { margin: 6px 0 0; }
+#part-panel .meta { margin-top: 0; color: #ffd700; font: 11px ui-monospace, monospace; text-transform: uppercase; }
+#part-panel .changed { color: #ff8a65; }
+#part-panel .meshes { color: #777; font: 11px ui-monospace, monospace; }
