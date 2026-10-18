@@ -3,7 +3,7 @@ import { PropertyBinding } from 'three';
 // Parts registry for Miia: 2018 Mazda MX-5 Miata Club convertible (ND) with the
 // Brembo/BBS package, Ceramic Metallic (47A). Black BBS forged wheels, red
 // Brembo front calipers (rears painted red to match), maroon soft top, black
-// interior, coilovers.
+// interior, stock Bilstein dampers.
 //
 // The glTF groups geometry by material rather than by physical part, so one
 // mesh can hold several real parts (e.g. "Body kit" is every painted panel).
@@ -86,7 +86,7 @@ export const PARTS = [
       meshes: ['Brake Rotors'], material: 'RawMetal', anchor: null, notes: 'Discs only; the model has no caliper geometry (see calipers).' },
     { id: 'suspension', label: 'Suspension', category: 'chassis',
       meshes: ['Suspension'], material: 'RawMetal', anchor: null,
-      notes: 'Coilovers on the real car. The model has stock hub/knuckle geometry only; ride height is lowered in car.js (STANCE_DROP_M, an estimate) by dropping the body over the wheels.' },
+      notes: 'Stock Bilstein dampers on the real car. The model has stock hub/knuckle geometry only; ride height can be corrected in car.js (STANCE_DROP_M, currently 0) by moving the body over the wheels. See docs/CALIBRATION.md.' },
     { id: 'chassis', label: 'Chassis / underbody', category: 'chassis',
       meshes: ['Vehicle base'], material: 'RawMetal', anchor: null, notes: '' },
 

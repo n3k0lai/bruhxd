@@ -3,9 +3,13 @@ import * as THREE from 'three';
 import { createPalette } from './materials.js';
 import { PARTS, PART_BY_MESH, meshKey } from './parts.js';
 
-// Coilover stance: how far the body sits lower than the source model, in metres.
-// An estimate (~1 in); set to 0 for the stock ride height.
-export const STANCE_DROP_M = 0.025;
+// Ride-height correction: how far the body sits lower than the source model, in
+// metres (negative raises it). 0 = the glTF as exported. Miia is on the stock
+// Bilsteins; the source model's arches sit roughly 35-45 mm higher over the hubs
+// than forum-reported stock ND figures, so once Miia's hub-to-lip heights are
+// measured, set this from docs/CALIBRATION.md rather than guessing.
+// The glTF itself is 1:1 in metres (verified there), so no scale factor is applied.
+export const STANCE_DROP_M = 0;
 
 // Wheel-assembly nodes stay put when the body is lowered.
 const WHEEL_NODES = new Set(['Brake_Rotors', 'Rims', 'Suspension', 'Tyres']);
@@ -88,7 +92,7 @@ export async function createCar(debugMode) {
         }
     }
 
-    // Coilover stance: lower every top-level node, then lift the wheel
+    // Ride height: lower every top-level node, then lift the wheel
     // assembly (children of "Vehicle base") back so the tyres stay planted.
     for (const node of model.children) node.position.y -= STANCE_DROP_M;
     const base = model.getObjectByName('Vehicle_base');
