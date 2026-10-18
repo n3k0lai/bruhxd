@@ -19,7 +19,7 @@ export function createPalette() {
             color: 0xffffff, metalness: 0.1, roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.1,
         }),
         // Miia's paint: "a beautiful light muted silver with a rich pearloid shimmer"
-        // (possibly Mazda Ceramic Metallic, unconfirmed). Light, slightly
+        // (Mazda Ceramic Metallic, paint code 47A). Light, slightly
         // desaturated silver; metallic flake under a glossy clearcoat; a thin
         // iridescent film + cool sheen for the pearl shift at glancing angles,
         // kept low so it reads silver, not rainbow.

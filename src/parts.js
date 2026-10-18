@@ -23,7 +23,7 @@ export const PARTS = [
     // ── exterior ──────────────────────────────────────────────
     { id: 'body', label: 'Body panels', category: 'exterior',
       meshes: ['Body kit', 'Body kit -- Internal'], material: 'MiiaSilver', anchor: [1.0, 0.45, 0.05],
-      notes: 'Light muted silver with a pearl shimmer (possibly Mazda Ceramic Metallic, unconfirmed; check the paint code on the door-jamb label). Single mesh: hood, fenders, doors, trunk lid, bumpers.',
+      notes: 'Light muted silver with a pearl shimmer (Mazda Ceramic Metallic, paint code 47A). Single mesh: hood, fenders, doors, trunk lid, bumpers.',
       changed: 'Was PearlWhite (bright white). Retuned to MiiaSilver to match the real paint.' },
     { id: 'soft-top', label: 'Soft top (stowed)', category: 'exterior',
       meshes: ['Soft Top'], material: null, anchor: [0, 0.75, -0.42], notes: 'Manual cloth top, folded.' },
