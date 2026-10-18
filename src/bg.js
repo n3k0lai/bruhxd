@@ -2,6 +2,18 @@ import * as THREE from 'three';
 
 let gradient; // Declare gradient variable to access it in the resize function
 
+// Default stops (the original red -> gold). Hex strings without '#'.
+export const BG_DEFAULT = Object.freeze(['ff0000', 'ffd600']);
+
+// Set the two gradient stops ('rrggbb' strings, or null for the default).
+// Raw values, no colour management: the shader writes them straight out, so
+// what you pick is what you see (same as the original literals).
+export function setGradientColors(mesh, stops) {
+    const [a, b] = stops ?? BG_DEFAULT;
+    mesh.material.uniforms.uColorA.value.setHex(parseInt(a, 16), THREE.NoColorSpace);
+    mesh.material.uniforms.uColorB.value.setHex(parseInt(b, 16), THREE.NoColorSpace);
+}
+
 export function createGradient() {
     const aspectRatio = window.innerWidth / window.innerHeight;
     const planeGeometry = createPlaneGeometry(aspectRatio);
@@ -9,6 +21,7 @@ export function createGradient() {
 
     gradient = new THREE.Mesh(planeGeometry, gradientMaterial);
     gradient.position.z = -5; // Moved further back in the scene
+    setGradientColors(gradient, null);
 
     window.addEventListener('resize', debounce(onResize, 1000)); // Debounced resize event
 
@@ -25,7 +38,9 @@ function createGradientMaterial() {
     return new THREE.ShaderMaterial({
         uniforms: {
             uTime: { value: 0 },
-            uResolution: { value: new THREE.Vector2() }
+            uResolution: { value: new THREE.Vector2() },
+            uColorA: { value: new THREE.Color() },
+            uColorB: { value: new THREE.Color() },
         },
         vertexShader: `
             varying vec2 vUv;
@@ -37,6 +52,8 @@ function createGradientMaterial() {
         fragmentShader: `
             uniform float uTime;
             uniform vec2 uResolution;
+            uniform vec3 uColorA;
+            uniform vec3 uColorB;
             varying vec2 vUv;
 
             void main() {
@@ -44,7 +61,7 @@ function createGradientMaterial() {
                 float angle = uTime * 0.5;
                 vec2 dir = vec2(cos(angle), sin(angle));
                 float d = dot(vUv - center, dir) * 0.5 + 0.5;
-                vec3 color = mix(vec3(1.0, 0.0, 0.0), vec3(1.0, 0.84, 0.0), d);
+                vec3 color = mix(uColorA, uColorB, d);
                 gl_FragColor = vec4(color, 1.0);
             }
         `

@@ -20,6 +20,9 @@ import { PropertyBinding } from 'three';
 //             [x, y, z] = normalised car box (x +1 = driver/left side,
 //             y 0 = ground .. 1 = top, z -1 = rear .. +1 = nose), null = no hotspot
 //   notes     free text for documentation
+//   carve     [{ from, name, min, max }]: split triangles inside a box out of a
+//             merged mesh into a new mesh `name` (car.js carveMesh)
+//   mod       menu toggle that shows/hides the part (mods.js)
 //   changed   why the material differs from the original site, if it does
 
 export const PARTS = [
@@ -33,8 +36,10 @@ export const PARTS = [
       notes: 'Manual cloth top in deep maroon, folded. Only the stowed top is modelled.',
       changed: 'Was the glTF default; now maroon fabric.' },
     { id: 'wind-blocker', label: 'Wind blocker (between roll hoops)', category: 'interior',
-      meshes: ['Back top-down panel'], material: 'BlackCloth', anchor: 'auto',
-      notes: 'Mesh panel between the headrests / roll hoops.',
+      meshes: ['Back top-down panel', 'wind-blocker-frame'], material: 'BlackCloth', anchor: 'auto',
+      carve: [{ from: 'Controls 1', name: 'wind-blocker-frame', min: [-0.26, 0.89, -0.86], max: [0.26, 1.02, -0.77] }],
+      overrides: { 'wind-blocker-frame': 'BlackPlastic' }, mod: 'hoops',
+      notes: 'Mesh panel between the headrests / roll hoops, with its frame (carved out of "Controls 1"). It clips to the hoop covers, so it is hidden with them.',
       changed: 'Was maroon; the maroon is the soft top, the interior is black.' },
     { id: 'glass', label: 'Windshield & glass', category: 'exterior',
       meshes: ['Glass Parts 1'], material: 'Glass', anchor: [0, 0.82, 0.12], notes: '' },
@@ -93,11 +98,24 @@ export const PARTS = [
     // ── interior ──────────────────────────────────────────────
     { id: 'seats', label: 'Seats', category: 'interior',
       meshes: ['Seats Base', 'Seat Back Headrest', 'Seat Accents'], material: 'Alcantara', anchor: [0.48, 0.62, -0.18],
-      notes: 'Black, with bright red stitching on the real car (stitching is not modelled). Headrests carry the speakers.',
+      notes: 'Black, with bright red stitching on the real car (stitching is not modelled). Headrests carry the speakers. The hoop covers behind the seats were carved out of "Seat Back Headrest" into their own part (hoop-covers).',
       changed: 'Was BlackCloth (flat black); now matte suede with sheen.' },
     { id: 'seatbelts', label: 'Seatbelts', category: 'interior',
       meshes: ['Seatbelts'], material: 'BlackCloth', anchor: null,
       notes: 'Retractors sit in the rear bulkhead. Keep carpet and storage clear of the webbing path and pretensioner.' },
+    { id: 'hoop-covers', label: 'Roll hoop covers', category: 'interior',
+      meshes: ['hoop-covers'], material: 'Alcantara', anchor: 'auto',
+      carve: [{ from: 'Seat Back Headrest', name: 'hoop-covers', min: [-0.6, 0.85, -0.9], max: [0.6, 1.2, -0.74] }],
+      mod: 'hoops',
+      notes: 'The two hoop-shaped covers behind the headrests, over the factory aluminium hoops. They come off for an aftermarket bar. The aluminium hoops themselves are not modelled (the covers are solid), so hiding the covers removes the whole stock hoop.' },
+    { id: 'bulkhead-trim', label: 'Rear bulkhead trim (plastic shielding)', category: 'interior',
+      meshes: ['bulkhead-trim'], material: 'BlackPlastic', anchor: 'auto',
+      carve: [{ from: 'Cabin Parts', name: 'bulkhead-trim', min: [-0.75, 0.3, -0.95], max: [0.75, 0.92, -0.58] }],
+      mod: 'shielding',
+      notes: 'Plastic panels behind the seats (storage hatches, speaker grille). They stay with a roll bar; the bar drops through notches in the upper edge. The model has them as one plain shell carved out of "Cabin Parts"; hatch doors and grille are not modelled.' },
+    { id: 'rollbar', label: 'Roll bar (mock-up)', category: 'interior',
+      meshes: [], generated: true, material: null, anchor: [0, 0.93, -0.45], mod: 'rollbar',
+      notes: 'Hard Dog ND Sport bar (Flyin\' Miata 20-19020) with double diagonals: 1.75 in DOM tube, full-width main hoop on the factory hoop mounts, rear legs to the deck, harness bar. Procedural stand-in (rollbar.js), positions eyeballed from photos; toggle and recolour it from the menu.' },
     { id: 'dashboard', label: 'Dashboard & gauges', category: 'interior',
       meshes: ['Dashboard', 'Dashboard Main Console', 'Dashboard Dials', 'Dashboard Dials Accents',
                'Dashboard UI Accents 1', 'Dashboard UI Accents 2', 'Dashboard UI Accents 3'], material: 'BlackPlastic', anchor: null, notes: '' },

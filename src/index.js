@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { createCar } from './car.js';
-import { createGradient } from './bg.js';
+import { createGradient, setGradientColors } from './bg.js';
 import { createControls } from './controls.js';
 import { createHotspots } from './hotspots.js';
 import { easterEgg } from './egg.js';
+import { createMods, stateFromParams } from './mods.js';
+import { createDrawer } from './drawer.js';
 
 const params = new URLSearchParams(window.location.search);
 const debugMode = params.has('debug');
@@ -33,7 +35,7 @@ const sun = new THREE.DirectionalLight(0xffffff, 0.8);
 sun.position.set(5, 10, 7.5);
 scene.add(sun);
 
-let car = null, controls = null, hotspots = null, selected = null;
+let car = null, controls = null, hotspots = null, selected = null, mods = null;
 const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
 
@@ -88,12 +90,30 @@ const api = {
     reset(id) {
         const ids = id ? [id] : [...car.parts.keys()];
         ids.forEach((pid) => partMeshes(pid).forEach((m) => { m.material.copy(m.userData.baseMaterial); m.visible = true; }));
+        mods?.apply(); // menu toggles win over the blanket "visible"
         if (selected) select(selected);
     },
     toggleHotspots(on = !hotspots?.visible) { hotspots?.setVisible(on); },
     // Fixed camera view for docs / screenshots, e.g. view({ x: 0.2, y: 1.6, zoom: 2.5 }).
-    view(v, { hold = true } = {}) { controls?.setView(v); if (controls && hold) controls.paused = true; },
-    debugState: () => ({ ...controls?.state(), selected, hotspots: hotspots?.visible ?? false }),
+    // target: [x, y, z] in the glTF frame (metres) to orbit/zoom around instead of
+    // the car's centre, e.g. [0, 1.0, -0.8] for the roll bar; null restores it.
+    view(v, { hold = true } = {}) {
+        if (car && v.target !== undefined) car.model.position.copy(v.target ? new THREE.Vector3(...v.target).negate() : car.home);
+        controls?.setView(v);
+        // Close-ups past the pinch limit (docs only; the next pinch/wheel re-clamps).
+        if (car && v.zoom > (controls?.state().zoom ?? Infinity)) car.pivot.scale.setScalar(v.zoom);
+        if (controls && hold) controls.paused = true;
+    },
+    // Mods menu state (see mods.js), e.g. mods({ rollbar: true, color: 'caliper-red' }).
+    mods(patch) { return patch ? mods?.set(patch) : mods?.state; },
+    // rollbar('gloss-black' | '#d3101b' | true | false): show the bar / set its colour.
+    rollbar(value = true) { return mods?.set(typeof value === 'boolean' ? { rollbar: value } : { rollbar: true, color: value }); },
+    // background(['111111', '000000'] | null) and floor(true | false): scene options.
+    background(stops) { return mods?.set({ bg: stops }); },
+    floor(on = true) { return mods?.set({ floor: on }); },
+    // led(true | false | colour): LED strip under the bar (shows the bar too).
+    led(value = true) { return mods?.set(typeof value === 'boolean' ? { led: value } : { rollbar: true, led: true, ledColor: value }); },
+    debugState: () => ({ ...controls?.state(), selected, hotspots: hotspots?.visible ?? false, mods: mods?.state }),
 };
 window.__bruhxd = api;
 
@@ -104,9 +124,13 @@ async function init() {
     try {
         car = await createCar(debugMode);
         scene.add(car.pivot);
+        car.home = car.model.position.clone();
+        if (debugMode) window.__bruhxdCar = car; // console / screenshot tooling
         fitCar();
         controls = createControls(renderer.domElement, car.pivot, { onTap: (e) => (hotspots?.visible || selected) && pick(e) });
         hotspots = createHotspots({ container: document.body, camera, car, onSelect: select });
+        mods = createMods(car, stateFromParams(params), { setBackground: (stops) => setGradientColors(gradient, stops) });
+        createDrawer({ container: document.body, mods });
         if (params.has('parts')) hotspots.setVisible(true);
         if (params.get('parts') === 'labels') hotspots.setLabels(true);
         if (params.get('part')) { hotspots.setVisible(true); select(params.get('part')); }
@@ -126,6 +150,7 @@ function animate(now) {
     lastT = now;
     if (!reduceMotion) gradient.material.uniforms.uTime.value += dt;
     controls?.update(dt, now);
+    car?.rollbar.update();
     renderer.render(scene, camera);
     hotspots?.update(window.innerWidth, window.innerHeight);
 }

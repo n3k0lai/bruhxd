@@ -2,6 +2,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 import { createPalette } from './materials.js';
 import { PARTS, PART_BY_MESH, meshKey } from './parts.js';
+import { createRollbar } from './rollbar.js';
 
 // Ride-height correction: how far the body sits lower than the source model, in
 // metres (negative raises it). 0 = the glTF as exported. Miia is on the stock
@@ -10,6 +11,9 @@ import { PARTS, PART_BY_MESH, meshKey } from './parts.js';
 // measured, set this from docs/CALIBRATION.md rather than guessing.
 // The glTF itself is 1:1 in metres (verified there), so no scale factor is applied.
 export const STANCE_DROP_M = 0;
+
+// Tyre contact patch height in the glTF frame (docs/CALIBRATION.md).
+const GROUND_Y = -0.011;
 
 // Wheel-assembly nodes stay put when the body is lowered.
 const WHEEL_NODES = new Set(['Brake_Rotors', 'Rims', 'Suspension', 'Tyres']);
@@ -46,6 +50,41 @@ function caliperGeometry({ side, y, front }) {
     return geo;
 }
 
+// Split part of a merged glTF mesh into its own mesh, so it can be hidden or
+// recoloured on its own. Triangles whose centroid falls inside the box [min, max]
+// (glTF scene frame, metres) move to a new mesh called `name`; the source keeps
+// the rest. Shares the vertex buffers, only the index lists differ. A stand-in
+// for re-segmenting the .blend (see docs/ROLLBAR.md).
+function carveMesh(model, { from, min, max, name }) {
+    const src = model.getObjectByName(meshKey(from));
+    if (!src?.isMesh || !src.geometry.index) { console.warn('[bruhxd] carve: no indexed mesh', from); return null; }
+    model.updateMatrixWorld(true);
+    const lo = new THREE.Vector3(...min), hi = new THREE.Vector3(...max);
+    const geo = src.geometry, idx = geo.index.array, pos = geo.attributes.position;
+    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+    const inside = [], outside = [];
+    for (let i = 0; i < idx.length; i += 3) {
+        a.fromBufferAttribute(pos, idx[i]); b.fromBufferAttribute(pos, idx[i + 1]); c.fromBufferAttribute(pos, idx[i + 2]);
+        a.add(b).add(c).divideScalar(3).applyMatrix4(src.matrixWorld);
+        const dst = a.x >= lo.x && a.x <= hi.x && a.y >= lo.y && a.y <= hi.y && a.z >= lo.z && a.z <= hi.z ? inside : outside;
+        dst.push(idx[i], idx[i + 1], idx[i + 2]);
+    }
+    if (!inside.length) { console.warn('[bruhxd] carve: empty box', name); return null; }
+    const split = (list) => {
+        const g = new THREE.BufferGeometry();
+        for (const [k, attr] of Object.entries(geo.attributes)) g.setAttribute(k, attr);
+        g.setIndex(list);
+        g.computeBoundingBox(); g.computeBoundingSphere();
+        return g;
+    };
+    const mesh = new THREE.Mesh(split(inside), src.material);
+    mesh.name = meshKey(name);
+    mesh.position.copy(src.position); mesh.quaternion.copy(src.quaternion); mesh.scale.copy(src.scale);
+    src.parent.add(mesh);
+    src.geometry = split(outside);
+    return mesh;
+}
+
 // Loads the Miata and returns { pivot, model, parts, box }.
 //   pivot: what the controls rotate/zoom (owns the original 45° / tilt pose)
 //   fit:   scaled on resize so the car fills the screen on any aspect ratio
@@ -58,6 +97,8 @@ export async function createCar(debugMode) {
     const palette = createPalette();
     const parts = new Map(PARTS.map((p) => [p.id, { ...p, objects: [] }]));
     const unknown = [];
+
+    for (const p of PARTS) for (const c of p.carve ?? []) carveMesh(model, c);
 
     model.traverse((child) => {
         if (!child.isMesh) return;
@@ -92,6 +133,14 @@ export async function createCar(debugMode) {
         }
     }
 
+    // Roll bar mock-up (generated; see parts.js 'rollbar' and rollbar.js).
+    // Added before the ride-height offset so it moves with the body.
+    const rollbar = createRollbar(palette);
+    model.add(rollbar.group);
+    const rbPart = parts.get('rollbar');
+    for (const t of rollbar.tubes) { t.userData.partId = 'rollbar'; rbPart?.objects.push(t); }
+    rollbar.group.visible = false;
+
     // Ride height: lower every top-level node, then lift the wheel
     // assembly (children of "Vehicle base") back so the tyres stay planted.
     for (const node of model.children) node.position.y -= STANCE_DROP_M;
@@ -106,6 +155,18 @@ export async function createCar(debugMode) {
     const center = box.getCenter(new THREE.Vector3());
     model.position.sub(center);
     box.translate(center.clone().negate());
+
+    // Optional floor (menu / ?floor): outlined 0.5 m squares on the true ground
+    // plane (tyre contact, y = -0.011 in the glTF frame), so it doubles as a scale
+    // reference. Line-only, off by default, not counted in the bounds above.
+    const floor = new THREE.GridHelper(8, 16, 0xffffff, 0xffffff);
+    floor.name = 'floor-grid';
+    floor.material.transparent = true;
+    floor.material.opacity = 0.4;
+    floor.material.depthWrite = false;
+    floor.position.set(center.x, GROUND_Y - 0.0005, center.z);
+    floor.visible = false;
+    model.add(floor);
 
     // Resolve hotspot anchors into model-local coordinates (the glTF scene's own
     // frame, i.e. before the recentring offset applied to model.position).
@@ -128,5 +189,5 @@ export async function createCar(debugMode) {
     pivot.add(fit);
     pivot.rotation.y = -Math.PI / 4; // original pose: 45° three-quarter view
     pivot.rotation.x = Math.PI / 12; // slight downward tilt
-    return { pivot, fit, model, parts, box, radius: box.getBoundingSphere(new THREE.Sphere()).radius };
+    return { pivot, fit, model, parts, rollbar, floor, box, radius: box.getBoundingSphere(new THREE.Sphere()).radius };
 }

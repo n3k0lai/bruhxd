@@ -3,6 +3,12 @@ import * as THREE from 'three';
 // Part labels projected from 3D anchors, plus a black info panel.
 // Off by default so the public page looks the same; enable with ?parts or "p".
 // Dots only; a label shows on hover / selection, or all labels with ?parts=labels.
+// Visible all the way up the tree (a mesh can be on inside a hidden group).
+function isShown(o) {
+    for (; o; o = o.parent) if (!o.visible) return false;
+    return true;
+}
+
 export function createHotspots({ container, camera, car, onSelect }) {
     const layer = document.createElement('div');
     layer.id = 'hotspots';
@@ -53,6 +59,10 @@ export function createHotspots({ container, camera, car, onSelect }) {
             if (!visible) return;
             car.model.localToWorld(centre.set(0, 0, 0));
             for (const { part, el } of items) {
+                // Parts switched off in the mods menu (or not fitted) get no dot.
+                const shown = part.objects.some(isShown);
+                el.hidden = !shown;
+                if (!shown) continue;
                 car.model.localToWorld(v.copy(part.anchorLocal));
                 // Hide labels on the far side of the car (interior parts always show).
                 const facing = part.category === 'interior' ||
