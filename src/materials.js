@@ -32,7 +32,36 @@ export function createPalette() {
             sheen: 0.35, sheenColor: 0xe6ebf5, sheenRoughness: 0.45,
             envMapIntensity: 1.3,
         }),
-        BlackPlastic: new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0, roughness: 0.8 }),
+        // BBS forged wheels in black: satin-gloss paint over metal, not mirror chrome.
+        // (Original BlackMetal below is kept for revert.)
+        BBSBlack: new THREE.MeshPhysicalMaterial({
+            color: 0x0c0c0d, metalness: 0.55, roughness: 0.32,
+            clearcoat: 0.8, clearcoatRoughness: 0.22,
+        }),
+        // Brembo calipers: bright red powder coat under a glossy clear.
+        BremboRed: new THREE.MeshPhysicalMaterial({
+            color: 0xd3101b, metalness: 0.1, roughness: 0.35,
+            clearcoat: 1, clearcoatRoughness: 0.08,
+        }),
+        // Soft top: deep maroon woven cloth. Very rough, fabric sheen at grazing angles.
+        MaroonTop: new THREE.MeshPhysicalMaterial({
+            color: 0x320a0f, metalness: 0, roughness: 0.95,
+            sheen: 0.6, sheenColor: 0x7a2530, sheenRoughness: 0.6,
+        }),
+        // Interior suede (Alcantara-style): near-black, fully matte, soft sheen.
+        Alcantara: new THREE.MeshPhysicalMaterial({
+            color: 0x0b0b0c, metalness: 0, roughness: 1,
+            sheen: 0.35, sheenColor: 0x2a2a2e, sheenRoughness: 0.8,
+        }),
+        // Steering wheel leather: black, low sheen.
+        BlackLeather: new THREE.MeshPhysicalMaterial({
+            color: 0x111112, metalness: 0, roughness: 0.55, clearcoat: 0.15, clearcoatRoughness: 0.6,
+        }),
+        // Bright red stitching accent.
+        RedStitch: new THREE.MeshStandardMaterial({ color: 0xe0161f, metalness: 0, roughness: 0.6 }),
+        // Darker than the original 0x222222: with the studio environment light the
+        // old value read mid-grey. Revert: color 0x222222.
+        BlackPlastic: new THREE.MeshStandardMaterial({ color: 0x151515, metalness: 0, roughness: 0.8 }),
         GreyPlastic: new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0, roughness: 0.5 }),
         BlackCloth: new THREE.MeshStandardMaterial({ color: 0x000000, metalness: 0, roughness: 0.8 }),
         MaroonCloth: new THREE.MeshStandardMaterial({ color: 0x800000, metalness: 0, roughness: 0.8 }),

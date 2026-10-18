@@ -91,6 +91,8 @@ const api = {
         if (selected) select(selected);
     },
     toggleHotspots(on = !hotspots?.visible) { hotspots?.setVisible(on); },
+    // Fixed camera view for docs / screenshots, e.g. view({ x: 0.2, y: 1.6, zoom: 2.5 }).
+    view(v, { hold = true } = {}) { controls?.setView(v); if (controls && hold) controls.paused = true; },
     debugState: () => ({ ...controls?.state(), selected, hotspots: hotspots?.visible ?? false }),
 };
 window.__bruhxd = api;

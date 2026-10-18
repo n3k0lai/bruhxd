@@ -113,6 +113,14 @@ export function createControls(el, pivot, { onTap } = {}) {
             }
         },
         paused: false,
+        // Jump to a fixed view (radians / zoom factor); stops coasting.
+        setView({ x, y, zoom: z } = {}) {
+            if (x !== undefined) pivot.rotation.x = x;
+            if (y !== undefined) pivot.rotation.y = y;
+            if (z !== undefined) setZoom(z);
+            clampTilt();
+            vx = vy = 0;
+        },
         get dragging() { return pointers.size > 0; },
         state() { return { rotX: pivot.rotation.x, rotY: pivot.rotation.y, zoom, vx, vy, pointers: pointers.size }; },
     };

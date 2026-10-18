@@ -1,6 +1,9 @@
 import { PropertyBinding } from 'three';
 
-// Parts registry for Miia (2018 Mazda MX-5 ND Club).
+// Parts registry for Miia: 2018 Mazda MX-5 Miata Club convertible (ND) with the
+// Brembo/BBS package, Ceramic Metallic (47A). Black BBS forged wheels, red
+// Brembo front calipers (rears painted red to match), maroon soft top, black
+// interior, coilovers.
 //
 // The glTF groups geometry by material rather than by physical part, so one
 // mesh can hold several real parts (e.g. "Body kit" is every painted panel).
@@ -26,10 +29,13 @@ export const PARTS = [
       notes: 'Light muted silver with a pearl shimmer (Mazda Ceramic Metallic, paint code 47A). Single mesh: hood, fenders, doors, trunk lid, bumpers.',
       changed: 'Was PearlWhite (bright white). Retuned to MiiaSilver to match the real paint.' },
     { id: 'soft-top', label: 'Soft top (stowed)', category: 'exterior',
-      meshes: ['Soft Top'], material: null, anchor: [0, 0.75, -0.42], notes: 'Manual cloth top, folded.' },
+      meshes: ['Soft Top'], material: 'MaroonTop', anchor: [0, 0.75, -0.42],
+      notes: 'Manual cloth top in deep maroon, folded. Only the stowed top is modelled.',
+      changed: 'Was the glTF default; now maroon fabric.' },
     { id: 'wind-blocker', label: 'Wind blocker (between roll hoops)', category: 'interior',
-      meshes: ['Back top-down panel'], material: 'MaroonCloth', anchor: 'auto',
-      notes: 'Mesh panel between the headrests / roll hoops.' },
+      meshes: ['Back top-down panel'], material: 'BlackCloth', anchor: 'auto',
+      notes: 'Mesh panel between the headrests / roll hoops.',
+      changed: 'Was maroon; the maroon is the soft top, the interior is black.' },
     { id: 'glass', label: 'Windshield & glass', category: 'exterior',
       meshes: ['Glass Parts 1'], material: 'Glass', anchor: [0, 0.82, 0.12], notes: '' },
     { id: 'windshield-trim', label: 'Windshield frame trim', category: 'exterior',
@@ -46,7 +52,7 @@ export const PARTS = [
     { id: 'lower-trim', label: 'Lower trim & dark exterior accents', category: 'exterior',
       meshes: ['Corner Accents', 'Trimming 1'], material: null, anchor: [1.0, 0.12, 0.62],
       notes: 'Lower bumper/sill trim. Club aero (front air dam, side sills, rear lip) is not modelled.',
-      changed: '"Corner Accents" had no material (light grey); now BlackPlastic via override below.', overrides: { 'Corner Accents': 'BlackPlastic' } },
+      changed: '"Corner Accents" (no material, light grey) and "Trimming 1" (glTF Darkparts grey) now BlackPlastic.', overrides: { 'Corner Accents': 'BlackPlastic', 'Trimming 1': 'BlackPlastic' } },
     { id: 'emblems', label: 'Emblems', category: 'exterior',
       meshes: ['Chrome Emblems'], material: 'Chrome', anchor: null, notes: '' },
     { id: 'front-plate', label: 'Front plate (offset)', category: 'exterior',
@@ -67,21 +73,28 @@ export const PARTS = [
       meshes: ['Brake Lights', 'Brake light Accents'], material: 'RedGlass', anchor: [0.66, 0.6, -0.95], notes: '' },
 
     // ── wheels & chassis ─────────────────────────────────────
-    { id: 'wheels', label: 'Wheels', category: 'wheels',
-      meshes: ['Rims'], material: 'BlackMetal', anchor: [1.0, 0.22, 0.7], notes: 'Dark wheels. All four share one mesh.' },
+    { id: 'wheels', label: 'Wheels (BBS forged, black)', category: 'wheels',
+      meshes: ['Rims'], material: 'BBSBlack', anchor: [1.0, 0.22, 0.7],
+      notes: 'BBS 17in forged wheels in black (Brembo/BBS package). All four share one mesh; the spoke design is the source model\'s, not the BBS pattern.',
+      changed: 'Was BlackMetal (mirror-finish black); now satin-gloss forged black.' },
+    { id: 'calipers', label: 'Brembo calipers', category: 'wheels',
+      meshes: [], generated: true, material: 'BremboRed', anchor: [1.0, 0.24, 0.5],
+      notes: 'Bright red Brembo 4-piston fronts, smaller red rears. Not in the source model: car.js adds simple arc-shaped stand-ins at each rotor (front larger than rear).' },
     { id: 'tyres', label: 'Tyres', category: 'wheels',
       meshes: ['Tyres'], material: null, anchor: null, notes: '' },
     { id: 'brakes', label: 'Brake rotors', category: 'wheels',
-      meshes: ['Brake Rotors'], material: 'RawMetal', anchor: null, notes: '' },
+      meshes: ['Brake Rotors'], material: 'RawMetal', anchor: null, notes: 'Discs only; the model has no caliper geometry (see calipers).' },
     { id: 'suspension', label: 'Suspension', category: 'chassis',
-      meshes: ['Suspension'], material: 'RawMetal', anchor: null, notes: '' },
+      meshes: ['Suspension'], material: 'RawMetal', anchor: null,
+      notes: 'Coilovers on the real car. The model has stock hub/knuckle geometry only; ride height is lowered in car.js (STANCE_DROP_M, an estimate) by dropping the body over the wheels.' },
     { id: 'chassis', label: 'Chassis / underbody', category: 'chassis',
       meshes: ['Vehicle base'], material: 'RawMetal', anchor: null, notes: '' },
 
     // ── interior ──────────────────────────────────────────────
     { id: 'seats', label: 'Seats', category: 'interior',
-      meshes: ['Seats Base', 'Seat Back Headrest', 'Seat Accents'], material: 'BlackCloth', anchor: [0.48, 0.62, -0.18],
-      notes: 'Headrests carry the speakers on the real car.' },
+      meshes: ['Seats Base', 'Seat Back Headrest', 'Seat Accents'], material: 'Alcantara', anchor: [0.48, 0.62, -0.18],
+      notes: 'Black, with bright red stitching on the real car (stitching is not modelled). Headrests carry the speakers.',
+      changed: 'Was BlackCloth (flat black); now matte suede with sheen.' },
     { id: 'seatbelts', label: 'Seatbelts', category: 'interior',
       meshes: ['Seatbelts'], material: 'BlackCloth', anchor: null,
       notes: 'Retractors sit in the rear bulkhead. Keep carpet and storage clear of the webbing path and pretensioner.' },
@@ -92,9 +105,13 @@ export const PARTS = [
       meshes: ['Infotainment Display', 'Dasboard Infotainments Controls and buttons'], material: 'BlackPlastic', anchor: 'auto',
       notes: 'CMU screen and commander knob.' },
     { id: 'steering', label: 'Steering wheel', category: 'interior',
-      meshes: ['Steering Wheel'], material: 'BlackPlastic', anchor: 'auto', notes: '' },
+      meshes: ['Steering Wheel'], material: 'BlackLeather', anchor: 'auto',
+      notes: 'Black leather with red stitching on the real car (one mesh, stitching not modelled).',
+      changed: 'Was BlackPlastic; now black leather.' },
     { id: 'shifter', label: 'Shifter', category: 'interior',
-      meshes: ['Shifter brace', 'Shifter Accent'], material: 'BlackPlastic', anchor: null, notes: '6-speed manual.' },
+      meshes: ['Shifter brace', 'Shifter Accent'], material: 'BlackPlastic', anchor: null,
+      notes: '6-speed manual. "Shifter Accent" is the thin seam strip on the boot, shown as red stitching.',
+      overrides: { 'Shifter Accent': 'RedStitch' }, changed: 'Boot seam strip now red stitching.' },
     { id: 'speakers', label: 'Speaker modules', category: 'interior',
       meshes: ['Speaker Modules'], material: 'BlackPlastic', anchor: null, notes: '',
       changed: 'Had no material (light grey).' },
@@ -105,9 +122,10 @@ export const PARTS = [
                'Internal chromatic parts', 'Door Internal Panels', 'Cabin Parts', 'Small Details',
                'Internal Cabin', 'Trimming 2', 'Additional Chromatic Accents'], material: null, anchor: null,
       notes: 'Door cards, armrests, console, bulkhead trim.',
-      changed: 'Parts with no material (light grey) now BlackPlastic, chrome-named ones Chrome.',
-      overrides: { 'Controls 1': 'BlackPlastic', 'Accent Trimming': 'BlackPlastic', 'Door Armrest': 'BlackPlastic',
-                   'Door Internal Panels': 'BlackPlastic', 'Small Details': 'BlackPlastic', 'Internal Cabin': 'BlackPlastic',
+      changed: 'Parts with no material (light grey) or the glTF "Darkparts" grey now BlackPlastic (interior is black); armrests suede; chrome-named ones Chrome.',
+      overrides: { 'Internal Top Trimming': 'BlackPlastic', 'Internals': 'BlackPlastic', 'Cabin Parts': 'BlackPlastic',
+                   'Controls 1': 'BlackPlastic', 'Accent Trimming': 'BlackPlastic',
+                   'Door Internal Panels': 'BlackPlastic', 'Door Armrest': 'Alcantara', 'Small Details': 'BlackPlastic', 'Internal Cabin': 'BlackPlastic',
                    'Trimming 2': 'BlackPlastic', 'Internal chromatic parts': 'Chrome', 'Additional Chromatic Accents': 'Chrome' } },
 
     // ── scenery from the source .blend (hidden) ──────────────
