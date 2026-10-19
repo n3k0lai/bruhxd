@@ -1,4 +1,4 @@
-import { BAR_PRESETS, LED_PRESETS, FAVORITES } from './rollbar.js';
+import { BAR_PRESETS, FAVORITES } from './rollbar.js';
 import { colorHex, writeParams } from './mods.js';
 import { SEAT_PRESETS } from './seats.js';
 import { SPOILERS } from './body.js';
@@ -20,17 +20,13 @@ export function createDrawer({ container, mods }) {
         shielding: toggle('Bulkhead trim', 'plastic shielding behind the seats'),
     };
     const barColor = swatches('Bar colour', BAR_PRESETS, (v) => mods.set({ color: v }));
-    const ledToggle = toggle('LED strip', 'under the bar');
-    const ledColor = swatches('LED colour', LED_PRESETS, (v) => mods.set({ ledColor: v }));
     const mirrorToggle = toggle('Pearl mirror caps', 'body pearl instead of gloss black');
     const seatColor = swatches('Seat colour', SEAT_PRESETS, (v) => mods.set({ seats: v }));
     mirrorToggle.input.addEventListener('change', () => mods.set({ mirrors: mirrorToggle.input.checked ? 'pearl' : 'black' }));
     const reset = el('button', { type: 'button', class: 'reset' }, 'Reset to stock');
     const copy = el('button', { type: 'button', class: 'reset copy' }, 'Copy config link');
 
-    // Body: widebody kit + spoiler selector (approximations, see body.js).
-    const kitToggle = toggle('Widebody kit', 'Rocket Bunny / Pandem ND (approx.)');
-    const rivetToggle = toggle('Flare rivets', 'exposed black rivets');
+    // Body: spoiler selector (approximations, see body.js).
     const spoilerBox = el('fieldset', { class: 'segmented' });
     spoilerBox.append(el('legend', {}, 'Spoiler'));
     const segRow = el('div', { class: 'seg' });
@@ -42,8 +38,6 @@ export function createDrawer({ container, mods }) {
         return b;
     });
     spoilerBox.append(segRow);
-    kitToggle.input.addEventListener('change', () => mods.set({ kit: kitToggle.input.checked }));
-    rivetToggle.input.addEventListener('change', () => mods.set({ rivets: rivetToggle.input.checked }));
 
     // Scene: floor grid and background gradient stops.
     const sceneHead = el('h3', {}, 'Scene');
@@ -56,8 +50,8 @@ export function createDrawer({ container, mods }) {
         const row = el('div', { class: 'grid stop' });
         row.append(el('span', { class: 'stop-label' }, i ? 'To' : 'From'));
         const favButtons = FAVORITES.map((key) => {
-            const hex = LED_PRESETS[key].color.toString(16).padStart(6, '0');
-            const b = el('button', { type: 'button', class: 'swatch', title: LED_PRESETS[key].label, 'aria-label': `${LED_PRESETS[key].label} (stop ${i + 1})` });
+            const hex = BAR_PRESETS[key].color.toString(16).padStart(6, '0');
+            const b = el('button', { type: 'button', class: 'swatch', title: BAR_PRESETS[key].label, 'aria-label': `${BAR_PRESETS[key].label} (stop ${i + 1})` });
             b.style.setProperty('--c', '#' + hex);
             if (key === 'miia-silver') b.classList.add('pearl');
             b.dataset.hex = hex;
@@ -79,15 +73,14 @@ export function createDrawer({ container, mods }) {
     floorToggle.input.addEventListener('change', () => mods.set({ floor: floorToggle.input.checked }));
 
     const body = el('div', { class: 'body' });
-    body.append(el('h3', {}, 'Car'), toggles.rollbar.row, toggles.hoops.row, toggles.shielding.row, barColor.box, ledToggle.row, ledColor.box,
+    body.append(el('h3', {}, 'Car'), toggles.rollbar.row, toggles.hoops.row, toggles.shielding.row, barColor.box,
         seatColor.box, mirrorToggle.row,
-        el('h3', {}, 'Body'), kitToggle.row, rivetToggle.row, spoilerBox,
+        el('h3', {}, 'Body'), spoilerBox,
         sceneHead, floorToggle.row, bgBox, reset, copy);
     drawer.append(head, body);
     container.append(btn, drawer);
 
     for (const [key, t] of Object.entries(toggles)) t.input.addEventListener('change', () => mods.set({ [key]: t.input.checked }));
-    ledToggle.input.addEventListener('change', () => mods.set({ led: ledToggle.input.checked }));
     reset.addEventListener('click', () => mods.reset());
     copy.addEventListener('click', async () => {
         // Always share the public site URL so a localhost session still produces
@@ -122,14 +115,9 @@ export function createDrawer({ container, mods }) {
 
     function render(s) {
         for (const [key, t] of Object.entries(toggles)) t.input.checked = !!s[key];
-        ledToggle.input.checked = !!s.led;
         floorToggle.input.checked = !!s.floor;
         mirrorToggle.input.checked = s.mirrors === 'pearl';
         seatColor.select(s.seats);
-        kitToggle.input.checked = !!s.kit;
-        rivetToggle.input.checked = !!s.rivets;
-        rivetToggle.input.disabled = !s.kit;
-        rivetToggle.row.classList.toggle('disabled', !s.kit);
         segButtons.forEach((b) => { const on = b.dataset.key === s.spoiler; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
         s.bg.forEach((c, i) => {
             const { input, wrap, favButtons } = bgInputs[i];
@@ -140,11 +128,8 @@ export function createDrawer({ container, mods }) {
             wrap.classList.toggle('on', !fav);
         });
         barColor.select(s.color);
-        ledColor.select(s.ledColor);
-        // Colour and LED controls only mean something with the bar fitted.
-        for (const box of [barColor.box, ledToggle.row, ledColor.box]) box.classList.toggle('disabled', !s.rollbar);
-        ledToggle.input.disabled = !s.rollbar;
-        ledColor.box.classList.toggle('disabled', !s.rollbar || !s.led);
+        // Bar colour only means something with the bar fitted.
+        barColor.box.classList.toggle('disabled', !s.rollbar);
     }
     mods.onChange(render);
     render(mods.state);

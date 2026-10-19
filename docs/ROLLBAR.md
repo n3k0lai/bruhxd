@@ -1,4 +1,4 @@
-# Mods menu: roll bar, body kit, scene
+# Mods menu: roll bar, spoilers, scene
 
 The hamburger menu (top left) opens a drawer of car and scene toggles. The
 default is stock: nothing changes unless a URL param or the menu turns
@@ -10,11 +10,8 @@ something on. Every change is mirrored to the URL, so a view can be shared.
 | `mock=rollbar` | | Alias for `rollbar=on`. |
 | `hoops` | `on` / `off` | Stock hoop covers and wind blocker. Defaults to the opposite of `rollbar`. |
 | `shielding` | `off` | Hides the plastic bulkhead trim behind the seats. |
-| `led` | `on`, `off`, preset, hex | LED strip under the bar's top tube. Only shown when the bar is on. |
 | `bg` | `rrggbb,rrggbb` | Background gradient stops. The default is `ff0000,ffd600`. |
 | `floor` | `on` / `off` | Outlined 0.5 m grid on the true ground plane. |
-| `kit` | `on` / `off` | Widebody mock-up (approximation of the Rocket Bunny / Pandem ND V2 kit). Pushes the wheels out. |
-| `rivets` | `off` | Hides the black flare rivets. |
 | `spoiler` | `duck`, `lip`, `wing` | Spoiler mock-up. The default is none. |
 | `seats` | preset, hex | Seat upholstery colour (inserts and bolsters). The default is `stock-black`. |
 | `mirrors` | `pearl` / `black` | Mirror caps. The default is gloss black, like the real car. |
@@ -23,9 +20,6 @@ something on. Every change is mirrored to the URL, so a view can be shared.
 favourites and show first in every picker. `miia-silver` uses the real
 MiiaSilver pearl material. The rest are `satin-black` (the default),
 `gloss-black`, `gunmetal`, `white` and `baby-blue`.
-
-**LED presets:** the same three favourites, plus `white`, `baby-blue`,
-`magenta` and `amber`.
 
 **Seat presets:** the same three favourites (as matte fabric), plus
 `stock-black` (the default), `prisma-ultra` (NRG Prisma Ultra light-grey
@@ -37,11 +31,10 @@ URL with the current mods as query params, for sharing a look.
 
 **Console:**
 - `__bruhxd.rollbar('gloss-black' | '#hex' | true | false)`
-- `__bruhxd.led(true | false | colour)`
 - `__bruhxd.mods({ ... })`
 - `__bruhxd.background([a, b] | null)`
 - `__bruhxd.floor(bool)`
-- `__bruhxd.mods({ kit: true, spoiler: 'wing' })`
+- `__bruhxd.mods({ spoiler: 'wing' })`
 - `__bruhxd.seats('tan' | '#hex' | null)`
 - `__bruhxd.mirrors('pearl' | 'black')`
 - `__bruhxd.view({ x, y, zoom, target: [x, y, z] })` frames a close-up around
@@ -82,30 +75,17 @@ FM's photos and description:
 - Rear legs leave the top tube inboard (x = ±0.30) and run back and down,
   outboard, to the deck.
 - A harness bar at y = 0.95 m.
-- Optional LED strip with a halo and a short-range light.
 
 All positions are eyeballed against the model and the photos. Replace the
 constants in `ROLLBAR` with the real drawing or tape measurements (see
 docs/CALIBRATION.md) before you use the mock-up for fitment.
 
-## Body mock-ups (approximations)
+## Spoiler mock-ups (approximations)
 
 `body.js` builds these procedurally at 1:1 scale. They're fitted by
 ray-casting the model's "Body kit" surface and painted in MiiaSilver. Shapes
 and sizes are eyeballed from product photos, not taken from drawings, so
 don't use them for fitment or ordering.
-
-**Widebody**, after the Rocket Bunny / Pandem ND V2 kit from TRA Kyoto. The
-published parts list is a front lip, front over-fenders (+40 mm per side),
-rear over-fenders (+80 mm per side), a rear diffuser and an optional duck
-wing. The mock-up includes:
-- Bolt-on over-fenders, swept around each arch, with exposed black rivets.
-- The front lip and the rear diffuser. The diffuser fins are kept clear of
-  the exhaust.
-- A slim sill extension. The official kit has no side skirts, so this is
-  extra.
-- Wheels pushed out by 30 mm front and 65 mm rear to fill the flares. The
-  merged wheel meshes are carved per wheel at load for this.
 
 **Spoilers:**
 - Rocket Bunny-style ducktail, about 55–60 mm kick.
@@ -129,10 +109,8 @@ wing. The mock-up includes:
   with covers off" view.
 - **Seat backs.** They reach z ≈ −0.82 m, which is why the main hoop sits at
   −0.84 m. Check this against the real car.
-- **Widebody and spoilers.** These are rough lofts. A proper version needs
-  the kit modelled from measurements or a scan, with the arch openings cut
-  into the body. The flares currently sit over the stock arch rather than
-  replacing it.
+- **Spoilers.** These are rough lofts. A proper version needs the parts
+  modelled from measurements or a scan.
 - **Wheels.** The Tyres, Rims and Brake Rotors meshes hold all four wheels.
   They're carved per wheel at runtime; splitting them in the .blend would be
   cleaner.

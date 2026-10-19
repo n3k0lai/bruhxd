@@ -149,8 +149,7 @@ number in mm.
    left to right. Then measure fore-aft between each side's front and rear
    bolts, and measure both diagonals to check for squareness. Caliper the bolt
    head size and thread pitch where you can get at them. This tells us
-   whether the bar clears the cavity carpet and whether the LED channel can
-   share the mounts.
+   whether the bar clears the cavity carpet.
 8. **Door opening.** Measure the horizontal width at the sill, the beltline
    and the top. Measure height from the sill top to the top of the opening at
    the B-pillar end. Measure the diagonal. These are a good check for

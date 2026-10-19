@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { createPalette } from './materials.js';
 import { PARTS, PART_BY_MESH, meshKey } from './parts.js';
 import { createRollbar } from './rollbar.js';
-import { createBodyKit } from './body.js';
+import { createBody } from './body.js';
 import { createSeats } from './seats.js';
 
 // Ride-height correction: how far the body sits lower than the source model, in
@@ -102,8 +102,7 @@ function caliperGeometry(frame, front) {
 }
 
 // Pivot at the disc centre, axes (axle out, forward-in-disc-plane, down-ish),
-// parented to the per-wheel rotor mesh so it follows steer and the widebody
-// track push.
+// parented to the per-wheel rotor mesh so it follows the steered fronts.
 function wheelPivot(frame) {
     const x = frame.axle.clone();
     const y = new THREE.Vector3(0, 1, 0).addScaledVector(x, -x.y).normalize(); // mesh +y = forward
@@ -299,8 +298,8 @@ export async function createCar(debugMode) {
         }
     }
 
-    // Body mock-ups (widebody, spoilers); built lazily when first switched on.
-    const body = createBodyKit(model, palette);
+    // Spoiler mock-ups; built lazily when first switched on.
+    const body = createBody(model, palette);
 
     // Seat upholstery colour (seats.js) and mirror caps (black / pearl).
     const seatPart = parts.get('seats');

@@ -20,7 +20,6 @@ export const ROLLBAR = {
     hoop: { x: 0.53, top: 1.2, base: 0.6, z: -0.84, bend: 0.15 }, // in the hoop covers' old footprint, clear of the seat backs
     harness: { y: 0.95, back: 0.03 }, // welded to the rear of the hoop legs, above the trim
     legs: { topX: 0.3, base: [0.68, 0.79, -1.05] },
-    led: { inset: 0.03, h: 0.008, d: 0.016 },
 };
 
 // Colour presets. Paint-type finishes over steel tube. The first three are
@@ -38,17 +37,6 @@ export const BAR_PRESETS = {
     'baby-blue': { label: 'Baby blue', color: 0x8ccdf0, metalness: 0.15, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.08 },
 };
 export const BAR_DEFAULT = 'satin-black';
-
-export const LED_PRESETS = {
-    'caliper-red': { label: 'Brembo red', color: 0xd3101b },
-    'top-maroon': { label: 'Top maroon', color: TOP_MAROON },
-    'miia-silver': { label: 'Miia silver', color: 0xc6c8cc },
-    white: { label: 'Cool white', color: 0xe8f0ff },
-    'baby-blue': { label: 'Baby blue', color: 0x7fd4ff },
-    magenta: { label: 'Magenta', color: 0xff2bd6 },
-    amber: { label: 'Amber', color: 0xffa424 },
-};
-export const LED_DEFAULT = 'white';
 
 // "#d3101b", "d3101b", "0xd3101b" or a preset key -> { key, hex } | null
 export function parseColor(value, presets) {
@@ -85,9 +73,9 @@ function tube(curve, r, segments) {
     return new THREE.TubeGeometry(curve, segments, r, 20, false);
 }
 
-// Returns { group, tubes: Mesh[], led: Mesh, glow: Light, setColor, setLed }.
+// Returns { group, tubes: Mesh[], material, setColor }.
 export function createRollbar(palette) {
-    const { tubeR: R, hoop: H, harness, legs, led } = ROLLBAR;
+    const { tubeR: R, hoop: H, harness, legs } = ROLLBAR;
     const group = new THREE.Group();
     group.name = 'rollbar';
     const material = new THREE.MeshPhysicalMaterial();
@@ -115,28 +103,6 @@ export function createRollbar(palette) {
         add(tube(new THREE.LineCurve3(top, base), R, 8), `rollbar_leg_${s > 0 ? 'left' : 'right'}`);
     }
 
-    // LED strip on the underside of the top bar, between the bends.
-    const span = 2 * (H.x - H.bend) - 2 * led.inset;
-    const ledMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffffff, emissiveIntensity: 2.5, roughness: 0.4, toneMapped: false });
-    const ledMesh = new THREE.Mesh(new THREE.BoxGeometry(span, led.h, led.d), ledMat);
-    ledMesh.name = 'rollbar_led';
-    ledMesh.position.set(0, H.top - R - led.h / 2 + 0.002, H.z);
-    // Soft halo so the strip reads as lit from any angle (additive, no depth write).
-    const haloMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
-    const halo = new THREE.Mesh(new THREE.CapsuleGeometry(0.02, span, 6, 12).rotateZ(Math.PI / 2), haloMat);
-    halo.name = 'rollbar_led_halo';
-    halo.position.set(0, H.top - R - 0.012, H.z);
-    // Soft spill onto the seats and bulkhead. Light range is in world units and
-    // the car is scaled by fit/zoom, so update() rescales it to ~0.9 m of car.
-    const GLOW_RANGE = 0.9;
-    const glow = new THREE.PointLight(0xffffff, 6, GLOW_RANGE, 1);
-    glow.position.set(0, H.top - 0.06, H.z + 0.02);
-    const ledGroup = new THREE.Group();
-    ledGroup.name = 'rollbar_led_group';
-    ledGroup.add(ledMesh, halo, glow);
-    ledGroup.visible = false;
-    group.add(ledGroup);
-
     function setColor(value) {
         const p = parseColor(value, BAR_PRESETS) ?? { key: BAR_DEFAULT };
         const preset = p.key ? BAR_PRESETS[p.key] : null;
@@ -152,21 +118,6 @@ export function createRollbar(palette) {
         return p;
     }
 
-    function setLed(on, value) {
-        ledGroup.visible = !!on;
-        const p = parseColor(value, LED_PRESETS) ?? { key: LED_DEFAULT, hex: LED_PRESETS[LED_DEFAULT].color };
-        ledMat.emissive.setHex(p.hex);
-        haloMat.color.setHex(p.hex);
-        glow.color.setHex(p.hex);
-        return p;
-    }
-
-    const ws = new THREE.Vector3();
-    function update() {
-        if (ledGroup.visible && group.visible) glow.distance = GLOW_RANGE * ledGroup.getWorldScale(ws).x;
-    }
-
     setColor(BAR_DEFAULT);
-    setLed(false);
-    return { group, tubes, material, led: ledGroup, setColor, setLed, update };
+    return { group, tubes, material, setColor };
 }

@@ -111,8 +111,6 @@ const api = {
     // background(['111111', '000000'] | null) and floor(true | false): scene options.
     background(stops) { return mods?.set({ bg: stops }); },
     floor(on = true) { return mods?.set({ floor: on }); },
-    // led(true | false | colour): LED strip under the bar (shows the bar too).
-    led(value = true) { return mods?.set(typeof value === 'boolean' ? { led: value } : { rollbar: true, led: true, ledColor: value }); },
     // seats('tan' | '#a57a50' | null): seat upholstery colour (null = stock black).
     seats(value) { return mods?.set({ seats: value ?? null }); },
     // mirrors('pearl' | 'black' | true | false): mirror caps (true = pearl).
@@ -163,7 +161,6 @@ function animate(now) {
     lastT = now;
     if (!reduceMotion) gradient.material.uniforms.uTime.value += dt;
     controls?.update(dt, now);
-    car?.rollbar.update();
     renderer.render(scene, camera);
     hotspots?.update(window.innerWidth, window.innerHeight);
 }

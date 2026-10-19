@@ -26,7 +26,7 @@ import { PropertyBinding } from 'three';
 //   changed   why the material differs from the original site, if it does
 
 // Per-wheel carve boxes for a merged wheel mesh (all four wheels share one
-// mesh), so the widebody mock-up can push each wheel out on its own.
+// mesh), so each wheel (and its caliper) can be fitted on its own.
 const quadrants = (from) => [['FL', 1, 1], ['FR', -1, 1], ['RL', 1, -1], ['RR', -1, -1]].map(([k, sx, sz]) => ({
     from, name: `${from}-${k}`,
     min: [sx > 0 ? 0 : -2, -1, sz > 0 ? 0 : -3], max: [sx > 0 ? 2 : 0, 2, sz > 0 ? 3 : 0],
@@ -106,7 +106,7 @@ export const PARTS = [
       changed: 'Was BlackMetal (mirror-finish black); now satin-gloss forged black.' },
     { id: 'calipers', label: 'Brembo calipers', category: 'wheels',
       meshes: [], generated: true, material: 'BremboRed', anchor: [1.0, 0.24, 0.5],
-      notes: 'Bright red Brembo 4-piston fronts (trailing the hub), smaller red rears (ahead of it). Not in the source model: car.js adds simple arc-shaped stand-ins, each fitted at load to its own wheel (disc centre, steer angle and axle from the per-wheel rotor mesh; clearance from the rim barrel and spokes) and parented to that rotor, so they follow the steered fronts and the widebody track push.' },
+      notes: 'Bright red Brembo 4-piston fronts (trailing the hub), smaller red rears (ahead of it). Not in the source model: car.js adds simple arc-shaped stand-ins, each fitted at load to its own wheel (disc centre, steer angle and axle from the per-wheel rotor mesh; clearance from the rim barrel and spokes) and parented to that rotor, so they follow the steered fronts.' },
     { id: 'tyres', label: 'Tyres', category: 'wheels',
       meshes: wheelMeshes('Tyres'), carve: quadrants('Tyres'), material: null, anchor: null, notes: '' },
     { id: 'brakes', label: 'Brake rotors', category: 'wheels',
@@ -180,9 +180,6 @@ export const PARTS = [
                    'Trimming 2': 'BlackPlastic', 'Internal chromatic parts': 'Chrome', 'Additional Chromatic Accents': 'Chrome' } },
 
     // ── body mock-ups (generated, approximations; see body.js) ──
-    { id: 'widebody', label: 'Widebody kit (mock-up)', category: 'exterior',
-      meshes: [], generated: true, material: null, anchor: null, mod: 'kit',
-      notes: 'Approximation of the Rocket Bunny / Pandem ND V2 kit: front lip, +40 mm front and +80 mm rear bolt-on over-fenders with exposed rivets, rear diffuser, plus a slim sill extension. Wheels pushed out to fill the flares. Procedural, eyeballed from photos.' },
     { id: 'spoiler', label: 'Spoiler (mock-up)', category: 'exterior',
       meshes: [], generated: true, material: null, anchor: null, mod: 'spoiler',
       notes: 'Approximations: Rocket Bunny-style ducktail, small trunk lip, or a GT wing on uprights.' },
