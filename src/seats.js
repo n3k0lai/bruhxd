@@ -13,6 +13,9 @@ export const SEAT_PRESETS = {
     'top-maroon': { label: 'Top maroon', color: TOP_MAROON },
     'miia-silver': { label: 'Miia silver pearl', color: 0xc6c8cc, pearl: true },
     'stock-black': { label: 'Stock black', color: 0x0b0b0c },
+    // NRG Prisma Ultra Large (FRP-302ULTRA): light warm-grey Alcantara / vegan
+    // microfiber. Sampled from the product photo (~#c3b9b2 under studio light).
+    'prisma-ultra': { label: 'NRG Prisma Ultra', color: 0xc3b9b2, alcantara: true },
     tan: { label: 'Tan', color: 0xa57a50 },
     oxblood: { label: 'Oxblood', color: 0x4a1014 },
     white: { label: 'White', color: 0xe6e3dc },
@@ -31,7 +34,12 @@ export function seatMaterial(value) {
     }
     const color = new THREE.Color(hex);
     const sheenColor = color.clone().lerp(new THREE.Color(0xffffff), 0.3);
-    const m = new THREE.MeshPhysicalMaterial({ color, metalness: 0, roughness: 0.95, sheen: 0.6, sheenColor, sheenRoughness: 0.55 });
+    // Alcantara / microfiber (NRG Prisma): slightly softer, fluffier sheen than cloth.
+    const alcantara = !!preset?.alcantara;
+    const m = new THREE.MeshPhysicalMaterial({
+        color, metalness: 0, roughness: alcantara ? 1 : 0.95,
+        sheen: alcantara ? 0.7 : 0.6, sheenColor, sheenRoughness: alcantara ? 0.7 : 0.55,
+    });
     if (preset?.pearl) Object.assign(m, { sheenColor: new THREE.Color(0xe6ebf5), iridescence: 0.15, iridescenceIOR: 1.45, iridescenceThicknessRange: [300, 450] });
     return m;
 }

@@ -1,5 +1,5 @@
 import { BAR_PRESETS, LED_PRESETS, FAVORITES } from './rollbar.js';
-import { colorHex } from './mods.js';
+import { colorHex, writeParams } from './mods.js';
 import { SEAT_PRESETS } from './seats.js';
 import { SPOILERS } from './body.js';
 
@@ -26,6 +26,7 @@ export function createDrawer({ container, mods }) {
     const seatColor = swatches('Seat colour', SEAT_PRESETS, (v) => mods.set({ seats: v }));
     mirrorToggle.input.addEventListener('change', () => mods.set({ mirrors: mirrorToggle.input.checked ? 'pearl' : 'black' }));
     const reset = el('button', { type: 'button', class: 'reset' }, 'Reset to stock');
+    const copy = el('button', { type: 'button', class: 'reset copy' }, 'Copy config link');
 
     // Body: widebody kit + spoiler selector (approximations, see body.js).
     const kitToggle = toggle('Widebody kit', 'Rocket Bunny / Pandem ND (approx.)');
@@ -81,13 +82,27 @@ export function createDrawer({ container, mods }) {
     body.append(el('h3', {}, 'Car'), toggles.rollbar.row, toggles.hoops.row, toggles.shielding.row, barColor.box, ledToggle.row, ledColor.box,
         seatColor.box, mirrorToggle.row,
         el('h3', {}, 'Body'), kitToggle.row, rivetToggle.row, spoilerBox,
-        sceneHead, floorToggle.row, bgBox, reset);
+        sceneHead, floorToggle.row, bgBox, reset, copy);
     drawer.append(head, body);
     container.append(btn, drawer);
 
     for (const [key, t] of Object.entries(toggles)) t.input.addEventListener('change', () => mods.set({ [key]: t.input.checked }));
     ledToggle.input.addEventListener('change', () => mods.set({ led: ledToggle.input.checked }));
     reset.addEventListener('click', () => mods.reset());
+    copy.addEventListener('click', async () => {
+        // Always share the public site URL so a localhost session still produces
+        // a link others can open.
+        const url = writeParams(mods.state, new URL('https://bruhxd.com/')).href;
+        try {
+            await navigator.clipboard.writeText(url);
+            copy.textContent = 'Copied!';
+            copy.classList.add('ok');
+            setTimeout(() => { copy.textContent = 'Copy config link'; copy.classList.remove('ok'); }, 1500);
+        } catch {
+            // Fallback: select-friendly prompt if clipboard is blocked.
+            window.prompt('Copy this config link:', url);
+        }
+    });
 
     let open = false;
     function setOpen(on) {

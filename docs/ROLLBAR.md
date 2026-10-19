@@ -28,8 +28,12 @@ MiiaSilver pearl material. The rest are `satin-black` (the default),
 `magenta` and `amber`.
 
 **Seat presets:** the same three favourites (as matte fabric), plus
-`stock-black` (the default), `tan`, `oxblood`, `white`, `grey` and
-`baby-blue`. `top-maroon` everywhere is the top's Dark Cherry (`521a18`).
+`stock-black` (the default), `prisma-ultra` (NRG Prisma Ultra light-grey
+Alcantara), `tan`, `oxblood`, `white`, `grey` and `baby-blue`.
+`top-maroon` everywhere is the top's Dark Cherry (`521a18`).
+
+**Copy config link** (bottom of the drawer) copies a `https://bruhxd.com/?…`
+URL with the current mods as query params, for sharing a look.
 
 **Console:**
 - `__bruhxd.rollbar('gloss-black' | '#hex' | true | false)`
