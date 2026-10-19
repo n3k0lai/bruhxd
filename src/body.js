@@ -259,12 +259,12 @@ export function createBodyKit(model, palette) {
 
     // ── wheels: push out to fill the flares ──────────────────
     // The tyres/rims/rotors are carved per wheel at load (parts.js), names end
-    // in -FL/-FR/-RL/-RR; calipers are generated per wheel.
+    // in -FL/-FR/-RL/-RR. Calipers are children of their rotor, so they follow.
     const wheelNodes = [];
     model.traverse((o) => {
-        const m = o.name.match(/-(F|R)(L|R)$/) || o.name.match(/^caliper_(front|rear)_(left|right)$/);
+        const m = o.name.match(/-(F|R)(L|R)$/);
         if (!m) return;
-        const front = m[1] === 'F' || m[1] === 'front', left = m[2] === 'L' || m[2] === 'left';
+        const front = m[1] === 'F', left = m[2] === 'L';
         wheelNodes.push({ o, x0: o.position.x, push: (left ? 1 : -1) * (front ? KIT.front.push : KIT.rear.push) });
     });
 

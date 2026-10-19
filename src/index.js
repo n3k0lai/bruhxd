@@ -113,6 +113,10 @@ const api = {
     floor(on = true) { return mods?.set({ floor: on }); },
     // led(true | false | colour): LED strip under the bar (shows the bar too).
     led(value = true) { return mods?.set(typeof value === 'boolean' ? { led: value } : { rollbar: true, led: true, ledColor: value }); },
+    // seats('tan' | '#a57a50' | null): seat upholstery colour (null = stock black).
+    seats(value) { return mods?.set({ seats: value ?? null }); },
+    // mirrors('pearl' | 'black' | true | false): mirror caps (true = pearl).
+    mirrors(value = 'pearl') { return mods?.set({ mirrors: value }); },
     debugState: () => ({ ...controls?.state(), selected, hotspots: hotspots?.visible ?? false, mods: mods?.state }),
 };
 window.__bruhxd = api;
@@ -126,6 +130,15 @@ async function init() {
         scene.add(car.pivot);
         car.home = car.model.position.clone();
         if (debugMode) window.__bruhxdCar = car; // console / screenshot tooling
+        // ?debug: what is under a screen pixel? -> { name, part, point (glTF frame) }
+        if (debugMode) window.__bruhxdPick = (x, y) => {
+            const ndc = new THREE.Vector2(x / window.innerWidth * 2 - 1, -(y / window.innerHeight) * 2 + 1);
+            raycaster.setFromCamera(ndc, camera);
+            const hit = raycaster.intersectObject(car.model, true).find((h) => h.object.visible && h.object.isMesh);
+            if (!hit) return null;
+            const p = car.model.worldToLocal(hit.point.clone());
+            return { name: hit.object.name, part: hit.object.userData.partId, point: p.toArray().map((v) => +v.toFixed(3)) };
+        };
         fitCar();
         controls = createControls(renderer.domElement, car.pivot, { onTap: (e) => (hotspots?.visible || selected) && pick(e) });
         hotspots = createHotspots({ container: document.body, camera, car, onSelect: select });

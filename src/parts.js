@@ -33,6 +33,17 @@ const quadrants = (from) => [['FL', 1, 1], ['FR', -1, 1], ['RL', 1, -1], ['RR', 
 }));
 const wheelMeshes = (from) => [from, ...['FL', 'FR', 'RL', 'RR'].map((k) => `${from}-${k}`)];
 
+// Seat bolsters / headrest fronts inside "Internals": whole pieces in a box
+// around each seat back and each cushion's side bolsters (mirrored per side),
+// minus rear-facing triangles (the hard seat-back shell).
+const seatBolsters = () => [1, -1].flatMap((s) => [
+    { min: [0.08, 0.25, -0.8], max: [0.68, 1.2, -0.4] },   // back + headrest
+    { min: [0.08, 0.2, -0.6], max: [0.68, 0.45, 0.05] },   // cushion bolsters
+].map(({ min, max }) => ({
+    from: 'Internals', name: 'seat-bolsters', whole: true, keepFacing: { dir: [0, 0, -1], dot: 0.5 },
+    min: [s > 0 ? min[0] : -max[0], min[1], min[2]], max: [s > 0 ? max[0] : -min[0], max[1], max[2]],
+})));
+
 export const PARTS = [
     // ── exterior ──────────────────────────────────────────────
     { id: 'body', label: 'Body panels', category: 'exterior',
@@ -55,9 +66,12 @@ export const PARTS = [
       meshes: ['Glass Windshield Trim'], material: 'BlackPlastic', anchor: null, notes: '',
       changed: 'Was caught by the "glass" rule and rendered as clear glass; it is the black A-pillar/header trim.' },
     { id: 'mirrors', label: 'Mirrors', category: 'exterior',
-      meshes: ['Side & Rearvide Mirrors'], material: 'MiiaSilver', anchor: [1.0, 0.66, 0.2],
-      notes: 'Side mirrors and interior rear-view mirror share one mesh.',
-      changed: 'Was chrome. ND mirror caps are body colour. Interior mirror shares the mesh, so it is body colour too until the mesh is split.' },
+      meshes: ['mirror-caps', 'Side & Rearvide Mirrors'], material: 'PianoBlack', anchor: [1.0, 0.66, 0.2],
+      carve: [1, -1].map((s) => ({ from: 'Body kit', name: 'mirror-caps', whole: true,
+          min: [s > 0 ? 0.75 : -1.0, 0.75, -0.06], max: [s > 0 ? 1.0 : -0.75, 0.95, 0.2] })),
+      overrides: { 'Side & Rearvide Mirrors': 'MirrorGlass' },
+      notes: 'Mirror caps are gloss black on Miia (like the ND Club); the drawer / ?mirrors=pearl switches them to the body pearl. The caps were part of the body mesh and are carved out at load (whole piece only, so no panel slivers). "Side & Rearvide Mirrors" is only the glass faces (both side mirrors and the interior mirror). Housing backs and arms are in "Trimming 1" (black plastic).',
+      changed: 'Was body-colour caps with silver-painted glass; now gloss-black caps and mirror glass.' },
     { id: 'grille', label: 'Grille, vents & radiator', category: 'exterior',
       meshes: ['Vents / Grills', 'Front Grill Corner Accents', 'Radiator'], material: 'BlackPlastic', anchor: [0, 0.28, 1.0],
       notes: 'Upper grille, corner intakes, radiator face.',
@@ -92,7 +106,7 @@ export const PARTS = [
       changed: 'Was BlackMetal (mirror-finish black); now satin-gloss forged black.' },
     { id: 'calipers', label: 'Brembo calipers', category: 'wheels',
       meshes: [], generated: true, material: 'BremboRed', anchor: [1.0, 0.24, 0.5],
-      notes: 'Bright red Brembo 4-piston fronts, smaller red rears. Not in the source model: car.js adds simple arc-shaped stand-ins at each rotor (front larger than rear).' },
+      notes: 'Bright red Brembo 4-piston fronts (trailing the hub), smaller red rears (ahead of it). Not in the source model: car.js adds simple arc-shaped stand-ins, each fitted at load to its own wheel (disc centre, steer angle and axle from the per-wheel rotor mesh; clearance from the rim barrel and spokes) and parented to that rotor, so they follow the steered fronts and the widebody track push.' },
     { id: 'tyres', label: 'Tyres', category: 'wheels',
       meshes: wheelMeshes('Tyres'), carve: quadrants('Tyres'), material: null, anchor: null, notes: '' },
     { id: 'brakes', label: 'Brake rotors', category: 'wheels',
@@ -105,17 +119,25 @@ export const PARTS = [
 
     // ── interior ──────────────────────────────────────────────
     { id: 'seats', label: 'Seats', category: 'interior',
-      meshes: ['Seats Base', 'Seat Back Headrest', 'Seat Accents'], material: 'Alcantara', anchor: [0.48, 0.62, -0.18],
-      notes: 'Black, with bright red stitching on the real car (stitching is not modelled). Headrests carry the speakers. The hoop covers behind the seats were carved out of "Seat Back Headrest" into their own part (hoop-covers).',
-      changed: 'Was BlackCloth (flat black); now matte suede with sheen.' },
+      meshes: ['Seats Base', 'Seat Back Headrest', 'Seat Accents', 'seat-bolsters'], material: 'Alcantara', anchor: [0.48, 0.62, -0.18],
+      upholstery: ['Seats Base', 'seat-bolsters'],
+      carve: seatBolsters(),
+      notes: 'Black, with bright red stitching on the real car (stitching is not modelled). Headrests carry the speakers. "Seats Base" is the quilted inserts; the bolsters and headrest fronts were merged into "Internals" and are carved out at load (seat-bolsters), leaving the rear-facing plastic seat-back shells there. Upholstery colour: drawer / ?seats= (seats.js). The hoop covers behind the seats were carved out of "Seat Back Headrest" into their own part (hoop-covers).',
+      changed: 'Was BlackCloth (flat black); now matte suede with sheen. Bolsters were BlackPlastic (part of "Internals"); now upholstery too.' },
     { id: 'seatbelts', label: 'Seatbelts', category: 'interior',
       meshes: ['Seatbelts'], material: 'BlackCloth', anchor: null,
       notes: 'Retractors sit in the rear bulkhead. Keep carpet and storage clear of the webbing path and pretensioner.' },
     { id: 'hoop-covers', label: 'Roll hoop covers', category: 'interior',
-      meshes: ['hoop-covers'], material: 'Alcantara', anchor: 'auto',
-      carve: [{ from: 'Seat Back Headrest', name: 'hoop-covers', min: [-0.6, 0.85, -0.9], max: [0.6, 1.2, -0.74] }],
+      meshes: ['hoop-covers', 'hoop-covers-front'], material: 'Alcantara', anchor: 'auto',
+      carve: [{ from: 'Seat Back Headrest', name: 'hoop-covers', min: [-0.6, 0.85, -0.9], max: [0.6, 1.2, -0.74] },
+              // The seat-facing front shell of each cover lives in "Internals", a
+              // few cm from the headrest backs: take only the pieces that sit
+              // wholly in the box, so the headrests stay put.
+              { from: 'Internals', name: 'hoop-covers-front', min: [0.15, 0.83, -0.845], max: [0.56, 1.18, -0.735], whole: true },
+              { from: 'Internals', name: 'hoop-covers-front', min: [-0.56, 0.83, -0.845], max: [-0.15, 1.18, -0.735], whole: true }],
+      overrides: { 'hoop-covers-front': 'BlackPlastic' },
       mod: 'hoops',
-      notes: 'The two hoop-shaped covers behind the headrests, over the factory aluminium hoops. They come off for an aftermarket bar. The aluminium hoops themselves are not modelled (the covers are solid), so hiding the covers removes the whole stock hoop.' },
+      notes: 'The two hoop-shaped covers behind the headrests, over the factory aluminium hoops: rear shell (carved from "Seat Back Headrest") and seat-facing front shell (carved from "Internals"). They come off for an aftermarket bar. The aluminium hoops themselves are not modelled (the covers are solid), so hiding the covers removes the whole stock hoop.' },
     { id: 'bulkhead-trim', label: 'Rear bulkhead trim (plastic shielding)', category: 'interior',
       meshes: ['bulkhead-trim'], material: 'BlackPlastic', anchor: 'auto',
       carve: [{ from: 'Cabin Parts', name: 'bulkhead-trim', min: [-0.75, 0.3, -0.95], max: [0.75, 0.92, -0.58] }],
@@ -128,8 +150,11 @@ export const PARTS = [
       meshes: ['Dashboard', 'Dashboard Main Console', 'Dashboard Dials', 'Dashboard Dials Accents',
                'Dashboard UI Accents 1', 'Dashboard UI Accents 2', 'Dashboard UI Accents 3'], material: 'BlackPlastic', anchor: null, notes: '' },
     { id: 'infotainment', label: 'Infotainment (MZD Connect)', category: 'interior',
-      meshes: ['Infotainment Display', 'Dasboard Infotainments Controls and buttons'], material: 'BlackPlastic', anchor: 'auto',
-      notes: 'CMU screen and commander knob.' },
+      meshes: ['Infotainment Display', 'Dasboard Infotainments Controls and buttons', 'cmu-bezel'], material: 'BlackPlastic', anchor: 'auto',
+      carve: [{ from: 'Internal chromatic parts', name: 'cmu-bezel', min: [-0.14, 0.78, 0.12], max: [0.062, 0.91, 0.21] }],
+      overrides: { 'cmu-bezel': 'PianoBlack' },
+      notes: 'CMU screen and commander knob. The frame around the screen is gloss piano-black on the real car; it was merged into the chrome trim mesh and is carved out at load.',
+      changed: 'Screen surround was chrome (part of "Internal chromatic parts"); now its own piano-black piece.' },
     { id: 'steering', label: 'Steering wheel', category: 'interior',
       meshes: ['Steering Wheel'], material: 'BlackLeather', anchor: 'auto',
       notes: 'Black leather with red stitching on the real car (one mesh, stitching not modelled).',

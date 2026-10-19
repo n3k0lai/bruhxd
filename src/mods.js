@@ -1,5 +1,6 @@
 import { BAR_PRESETS, BAR_DEFAULT, LED_PRESETS, LED_DEFAULT, parseColor } from './rollbar.js';
 import { BG_DEFAULT } from './bg.js';
+import { SEAT_PRESETS, SEAT_DEFAULT } from './seats.js';
 
 // Car mods state: roll bar mock-up, stock hoop covers, bulkhead trim, LED strip,
 // plus the scene: background gradient stops and an optional floor grid.
@@ -17,15 +18,19 @@ import { BG_DEFAULT } from './bg.js';
 //   ?kit[=on|off]                      widebody mock-up (Rocket Bunny / Pandem ND approximation)
 //   ?rivets=off                        hide the flare rivets
 //   ?spoiler=duck|lip|wing             spoiler mock-up (default none)
+//   ?seats=<preset>|<hex>              seat upholstery colour (default stock-black)
+//   ?mirrors=pearl|black               mirror caps (default black, like the real car)
 //
 // Colours are preset keys (rollbar.js) or hex without the '#', e.g. ?rollbar=d3101b.
 
 export const STOCK = Object.freeze({
     rollbar: false, hoops: true, shielding: true, color: BAR_DEFAULT, led: false, ledColor: LED_DEFAULT,
     bg: BG_DEFAULT, floor: false, kit: false, rivets: true, spoiler: 'none',
+    seats: SEAT_DEFAULT, mirrors: 'black',
 });
-const PARAMS = ['mock', 'rollbar', 'hoops', 'shielding', 'led', 'bg', 'floor', 'kit', 'rivets', 'spoiler'];
+const PARAMS = ['mock', 'rollbar', 'hoops', 'shielding', 'led', 'bg', 'floor', 'kit', 'rivets', 'spoiler', 'seats', 'mirrors'];
 const SPOILER_KINDS = ['none', 'duck', 'lip', 'wing'];
+const MIRROR_KINDS = ['black', 'pearl'];
 const HEX6 = /^(?:#|0x)?([0-9a-f]{6})$/i;
 const sameBg = (a, b) => a[0] === b[0] && a[1] === b[1];
 
@@ -66,6 +71,10 @@ export function stateFromParams(params) {
     if (rivets !== undefined) s.rivets = rivets;
     const sp = (params.get('spoiler') ?? '').toLowerCase();
     if (SPOILER_KINDS.includes(sp)) s.spoiler = sp;
+    const seats = params.has('seats') && colorKey(params.get('seats'), SEAT_PRESETS);
+    if (seats) s.seats = seats;
+    const mir = (params.get('mirrors') ?? '').toLowerCase();
+    if (MIRROR_KINDS.includes(mir)) s.mirrors = mir;
     return s;
 }
 
@@ -81,6 +90,8 @@ export function writeParams(state, url) {
     if (state.kit) q.set('kit', 'on');
     if (!state.rivets) q.set('rivets', 'off');
     if (state.spoiler !== 'none') q.set('spoiler', state.spoiler);
+    if (state.seats !== SEAT_DEFAULT) q.set('seats', state.seats);
+    if (state.mirrors !== 'black') q.set('mirrors', state.mirrors);
     return url;
 }
 
@@ -103,6 +114,8 @@ export function createMods(car, initial = STOCK, scene = {}) {
         car.floor.visible = state.floor;
         car.body.setKit(state.kit, { rivets: state.rivets });
         car.body.setSpoiler(state.spoiler);
+        car.seats.setColor(state.seats);
+        car.mirrors.set(state.mirrors);
         scene.setBackground?.(state.bg);
     }
 
@@ -114,6 +127,9 @@ export function createMods(car, initial = STOCK, scene = {}) {
         if ('color' in patch) next.color = colorKey(patch.color, BAR_PRESETS) ?? state.color;
         if ('ledColor' in patch) next.ledColor = colorKey(patch.ledColor, LED_PRESETS) ?? state.ledColor;
         if ('spoiler' in patch && !SPOILER_KINDS.includes(next.spoiler)) next.spoiler = state.spoiler;
+        if ('seats' in patch) next.seats = colorKey(patch.seats ?? SEAT_DEFAULT, SEAT_PRESETS) ?? state.seats;
+        if ('mirrors' in patch) next.mirrors = patch.mirrors === true ? 'pearl' : patch.mirrors === false ? 'black'
+            : MIRROR_KINDS.includes(String(patch.mirrors).toLowerCase()) ? String(patch.mirrors).toLowerCase() : state.mirrors;
         if ('bg' in patch) {
             const bg = (patch.bg ?? BG_DEFAULT).map((c) => String(c).match(HEX6)?.[1].toLowerCase());
             next.bg = bg.length === 2 && bg.every(Boolean) ? bg : state.bg;

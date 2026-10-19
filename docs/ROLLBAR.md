@@ -16,6 +16,8 @@ something on. Every change is mirrored to the URL, so a view can be shared.
 | `kit` | `on` / `off` | Widebody mock-up (approximation of the Rocket Bunny / Pandem ND V2 kit). Pushes the wheels out. |
 | `rivets` | `off` | Hides the black flare rivets. |
 | `spoiler` | `duck`, `lip`, `wing` | Spoiler mock-up. The default is none. |
+| `seats` | preset, hex | Seat upholstery colour (inserts and bolsters). The default is `stock-black`. |
+| `mirrors` | `pearl` / `black` | Mirror caps. The default is gloss black, like the real car. |
 
 **Bar presets:** `caliper-red`, `top-maroon` and `miia-silver` are the
 favourites and show first in every picker. `miia-silver` uses the real
@@ -25,6 +27,10 @@ MiiaSilver pearl material. The rest are `satin-black` (the default),
 **LED presets:** the same three favourites, plus `white`, `baby-blue`,
 `magenta` and `amber`.
 
+**Seat presets:** the same three favourites (as matte fabric), plus
+`stock-black` (the default), `tan`, `oxblood`, `white`, `grey` and
+`baby-blue`. `top-maroon` everywhere is the top's Dark Cherry (`521a18`).
+
 **Console:**
 - `__bruhxd.rollbar('gloss-black' | '#hex' | true | false)`
 - `__bruhxd.led(true | false | colour)`
@@ -32,6 +38,8 @@ MiiaSilver pearl material. The rest are `satin-black` (the default),
 - `__bruhxd.background([a, b] | null)`
 - `__bruhxd.floor(bool)`
 - `__bruhxd.mods({ kit: true, spoiler: 'wing' })`
+- `__bruhxd.seats('tan' | '#hex' | null)`
+- `__bruhxd.mirrors('pearl' | 'black')`
 - `__bruhxd.view({ x, y, zoom, target: [x, y, z] })` frames a close-up around
   a point in the glTF frame.
 
@@ -41,11 +49,14 @@ The glTF groups geometry by material, so the pieces behind the seats share
 meshes with unrelated parts. `car.js` `carveMesh` splits them out at load
 time: it moves the triangles whose centroid falls inside a box into a new mesh.
 The vertex buffers are shared, so this costs nothing and the glTF is untouched.
-The boxes live in `parts.js` (`carve`).
+The boxes live in `parts.js` (`carve`). With `whole: true` only connected
+pieces lying entirely inside the box move, so a neighbour poking into the box
+(a headrest, a body panel) stays intact.
 
 | Part | Carved from | Toggle |
 |---|---|---|
-| `hoop-covers` (the two hoop-shaped covers behind the headrests) | `Seat Back Headrest` | `hoops` |
+| `hoop-covers` (the two hoop-shaped covers behind the headrests): rear shell | `Seat Back Headrest` | `hoops` |
+| `hoop-covers-front` (the seat-facing front shell of each cover) | `Internals` (whole pieces) | `hoops` |
 | `wind-blocker` frame (the panel was already its own mesh) | `Controls 1` | `hoops` |
 | `bulkhead-trim` (plastic shielding) | `Cabin Parts` | `shielding` |
 

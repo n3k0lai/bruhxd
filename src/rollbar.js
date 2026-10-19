@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { TOP_MAROON } from './materials.js';
 
 // Procedural mock-up of the Hard Dog "ND Sport" roll bar sold by Flyin' Miata
 // (FM part 20-19020, double-diagonal version), for trying colours on Miia.
@@ -28,7 +29,7 @@ export const ROLLBAR = {
 export const FAVORITES = ['caliper-red', 'top-maroon', 'miia-silver'];
 export const BAR_PRESETS = {
     'caliper-red': { label: 'Brembo red', color: 0xd3101b, metalness: 0.1, roughness: 0.35, clearcoat: 1, clearcoatRoughness: 0.08 },
-    'top-maroon': { label: 'Top maroon', color: 0x320a0f, metalness: 0.2, roughness: 0.4, clearcoat: 1, clearcoatRoughness: 0.1 },
+    'top-maroon': { label: 'Top maroon', color: TOP_MAROON, metalness: 0.2, roughness: 0.4, clearcoat: 1, clearcoatRoughness: 0.1 },
     'miia-silver': { label: 'Miia silver pearl', palette: 'MiiaSilver', color: 0xc6c8cc },
     'satin-black': { label: 'Satin black', color: 0x111113, metalness: 0.35, roughness: 0.55, clearcoat: 0.2, clearcoatRoughness: 0.6 },
     'gloss-black': { label: 'Gloss black', color: 0x060607, metalness: 0.4, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.04 },
@@ -40,7 +41,7 @@ export const BAR_DEFAULT = 'satin-black';
 
 export const LED_PRESETS = {
     'caliper-red': { label: 'Brembo red', color: 0xd3101b },
-    'top-maroon': { label: 'Top maroon', color: 0x320a0f },
+    'top-maroon': { label: 'Top maroon', color: TOP_MAROON },
     'miia-silver': { label: 'Miia silver', color: 0xc6c8cc },
     white: { label: 'Cool white', color: 0xe8f0ff },
     'baby-blue': { label: 'Baby blue', color: 0x7fd4ff },

@@ -1,5 +1,6 @@
 import { BAR_PRESETS, LED_PRESETS, FAVORITES } from './rollbar.js';
 import { colorHex } from './mods.js';
+import { SEAT_PRESETS } from './seats.js';
 import { SPOILERS } from './body.js';
 
 // Hamburger menu + slide-out drawer of car toggles, driven by mods.js.
@@ -21,6 +22,9 @@ export function createDrawer({ container, mods }) {
     const barColor = swatches('Bar colour', BAR_PRESETS, (v) => mods.set({ color: v }));
     const ledToggle = toggle('LED strip', 'under the bar');
     const ledColor = swatches('LED colour', LED_PRESETS, (v) => mods.set({ ledColor: v }));
+    const mirrorToggle = toggle('Pearl mirror caps', 'body pearl instead of gloss black');
+    const seatColor = swatches('Seat colour', SEAT_PRESETS, (v) => mods.set({ seats: v }));
+    mirrorToggle.input.addEventListener('change', () => mods.set({ mirrors: mirrorToggle.input.checked ? 'pearl' : 'black' }));
     const reset = el('button', { type: 'button', class: 'reset' }, 'Reset to stock');
 
     // Body: widebody kit + spoiler selector (approximations, see body.js).
@@ -75,6 +79,7 @@ export function createDrawer({ container, mods }) {
 
     const body = el('div', { class: 'body' });
     body.append(el('h3', {}, 'Car'), toggles.rollbar.row, toggles.hoops.row, toggles.shielding.row, barColor.box, ledToggle.row, ledColor.box,
+        seatColor.box, mirrorToggle.row,
         el('h3', {}, 'Body'), kitToggle.row, rivetToggle.row, spoilerBox,
         sceneHead, floorToggle.row, bgBox, reset);
     drawer.append(head, body);
@@ -104,6 +109,8 @@ export function createDrawer({ container, mods }) {
         for (const [key, t] of Object.entries(toggles)) t.input.checked = !!s[key];
         ledToggle.input.checked = !!s.led;
         floorToggle.input.checked = !!s.floor;
+        mirrorToggle.input.checked = s.mirrors === 'pearl';
+        seatColor.select(s.seats);
         kitToggle.input.checked = !!s.kit;
         rivetToggle.input.checked = !!s.rivets;
         rivetToggle.input.disabled = !s.kit;

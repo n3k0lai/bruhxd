@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 
+// The cloth top's colour (Mazda Dark Cherry): a warm red-brown cherry, not
+// purple. Shared by the top and every "Top maroon" swatch (bar, LED, seats).
+// Was 0x320a0f, which read mauve under the studio light.
+export const TOP_MAROON = 0x521a18;
+
 // Material palette. Values are Nicholai's original hand-tuned materials from
 // car.js, moved here unchanged so parts can reference them by key.
 export function createPalette() {
@@ -43,10 +48,11 @@ export function createPalette() {
             color: 0xd3101b, metalness: 0.1, roughness: 0.35,
             clearcoat: 1, clearcoatRoughness: 0.08,
         }),
-        // Soft top: deep maroon woven cloth. Very rough, fabric sheen at grazing angles.
+        // Soft top: Dark Cherry woven cloth. Very rough, warm fabric sheen at
+        // grazing angles (was 0x320a0f with a 0x7a2530 sheen, which went mauve).
         MaroonTop: new THREE.MeshPhysicalMaterial({
-            color: 0x320a0f, metalness: 0, roughness: 0.95,
-            sheen: 0.6, sheenColor: 0x7a2530, sheenRoughness: 0.6,
+            color: TOP_MAROON, metalness: 0, roughness: 0.95,
+            sheen: 0.45, sheenColor: 0x8a2a1e, sheenRoughness: 0.6,
         }),
         // Interior suede (Alcantara-style): near-black, fully matte, soft sheen.
         Alcantara: new THREE.MeshPhysicalMaterial({
@@ -57,6 +63,12 @@ export function createPalette() {
         BlackLeather: new THREE.MeshPhysicalMaterial({
             color: 0x111112, metalness: 0, roughness: 0.55, clearcoat: 0.15, clearcoatRoughness: 0.6,
         }),
+        // Gloss piano-black trim (CMU screen surround).
+        PianoBlack: new THREE.MeshPhysicalMaterial({
+            color: 0x050506, metalness: 0, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.03,
+        }),
+        // Mirror glass.
+        MirrorGlass: new THREE.MeshStandardMaterial({ color: 0xdfe4ea, metalness: 1, roughness: 0.03 }),
         // Bright red stitching accent.
         RedStitch: new THREE.MeshStandardMaterial({ color: 0xe0161f, metalness: 0, roughness: 0.6 }),
         // Darker than the original 0x222222: with the studio environment light the
