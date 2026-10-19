@@ -6,15 +6,17 @@ something on. Every change is mirrored to the URL, so a view can be shared.
 
 | Param | Values | Effect |
 |---|---|---|
-| `rollbar` | `on`, `off`, preset, hex (`d3101b`) | Roll bar plus colour. Turning it on hides the hoop covers. |
+| `rollbar` | `on`, `off`, preset, hex (`d3101b`) | Roll bar plus colour. Turning it on always hides the stock hoop covers. |
 | `mock=rollbar` | | Alias for `rollbar=on`. |
-| `hoops` | `on` / `off` | Stock hoop covers and wind blocker. Defaults to the opposite of `rollbar`. |
-| `shielding` | `off` | Hides the plastic bulkhead trim behind the seats. |
-| `bg` | `rrggbb,rrggbb` | Background gradient stops. The default is `ff0000,ffd600`. |
+| `bg` | `rrggbb,rrggbb` | Background gradient stops. The default is `99c1f1,8ff0a4`. |
 | `floor` | `on` / `off` | Outlined 0.5 m grid on the true ground plane. |
 | `spoiler` | `duck`, `lip`, `wing` | Spoiler mock-up. The default is none. |
 | `seats` | preset, hex | Seat upholstery colour (inserts and bolsters). The default is `stock-black`. |
 | `mirrors` | `pearl` / `black` | Mirror caps. The default is gloss black, like the real car. |
+
+Stock hoop covers follow `rollbar` (no separate `?hoops=`). Bulkhead trim stays
+visible for now; its toggle is deferred. Legacy `?hoops=` / `?shielding=` are
+stripped from shared links.
 
 **Bar presets:** `caliper-red`, `top-maroon` and `miia-silver` are the
 favourites and show first in every picker. `miia-silver` uses the real

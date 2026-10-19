@@ -2,21 +2,23 @@ import { BAR_PRESETS, BAR_DEFAULT, parseColor } from './rollbar.js';
 import { BG_DEFAULT } from './bg.js';
 import { SEAT_PRESETS, SEAT_DEFAULT } from './seats.js';
 
-// Car mods state: roll bar mock-up, stock hoop covers, bulkhead trim, spoiler,
-// seats and mirror caps, plus the scene: background gradient stops and an optional floor grid.
+// Car mods state: roll bar mock-up, spoiler, seats and mirror caps, plus the
+// scene: background gradient stops and an optional floor grid.
 // Default is stock (nothing changed), so the public page looks the same unless
 // a URL param or the menu turns something on. State is mirrored to the URL:
 //
 //   ?rollbar[=on|off|<preset>|<hex>]   roll bar (and its colour); turning it on
-//                                      also hides the hoop covers unless ?hoops says otherwise
+//                                      always hides the stock hoop covers
 //   ?mock=rollbar                      alias for ?rollbar
-//   ?hoops=on|off                      stock hoop covers + wind blocker
-//   ?shielding=off                     plastic bulkhead trim behind the seats
-//   ?bg=<hex>,<hex>                    background gradient stops (default ff0000,ffd600)
+//   ?bg=<hex>,<hex>                    background gradient stops (default 99c1f1,8ff0a4)
 //   ?floor[=on|off]                    outlined 0.5 m grid on the ground plane
 //   ?spoiler=duck|lip|wing             spoiler mock-up (default none)
 //   ?seats=<preset>|<hex>              seat upholstery colour (default stock-black)
 //   ?mirrors=pearl|black               mirror caps (default black, like the real car)
+//
+// Hoop covers (`hoops`) are derived from rollbar (hidden when the bar is on).
+// Bulkhead trim (`shielding`) stays on for now; its drawer toggle is deferred.
+// Legacy ?hoops= / ?shielding= are stripped from shared links.
 //
 // Colours are preset keys (rollbar.js) or hex without the '#', e.g. ?rollbar=d3101b.
 
@@ -25,9 +27,10 @@ export const STOCK = Object.freeze({
     bg: BG_DEFAULT, floor: false, spoiler: 'none',
     seats: SEAT_DEFAULT, mirrors: 'black',
 });
-const PARAMS = ['mock', 'rollbar', 'hoops', 'shielding', 'bg', 'floor', 'spoiler', 'seats', 'mirrors'];
-// Retired params (LED strip, widebody kit): dropped from old shared links.
-const RETIRED = ['led', 'kit', 'rivets'];
+const PARAMS = ['mock', 'rollbar', 'bg', 'floor', 'spoiler', 'seats', 'mirrors'];
+// Retired params: LED strip, widebody kit, and user-facing hoops/shielding
+// overrides (hoops now follow rollbar; shielding UI deferred, always on).
+const RETIRED = ['led', 'kit', 'rivets', 'hoops', 'shielding'];
 const SPOILER_KINDS = ['none', 'duck', 'lip', 'wing'];
 const MIRROR_KINDS = ['black', 'pearl'];
 const HEX6 = /^(?:#|0x)?([0-9a-f]{6})$/i;
@@ -53,11 +56,9 @@ export function stateFromParams(params) {
     if (params.get('mock') === 'rollbar') s.rollbar = true;
     const rb = flagged('rollbar', 'color', BAR_PRESETS);
     if (rb !== undefined) s.rollbar = rb;
+    // Always derive; ignore legacy ?hoops= / ?shielding=.
     s.hoops = !s.rollbar;
-    const hoops = flagged('hoops');
-    if (hoops !== undefined) s.hoops = hoops;
-    const sh = flagged('shielding');
-    if (sh !== undefined) s.shielding = sh;
+    s.shielding = true;
     const bg = (params.get('bg') ?? '').split(',').map((c) => c.trim().match(HEX6)?.[1].toLowerCase());
     if (bg.length === 2 && bg.every(Boolean)) s.bg = bg;
     const floor = flagged('floor');
@@ -75,8 +76,7 @@ export function writeParams(state, url) {
     const q = url.searchParams;
     [...PARAMS, ...RETIRED].forEach((k) => q.delete(k));
     if (state.rollbar) q.set('rollbar', state.color === BAR_DEFAULT ? 'on' : state.color);
-    if (state.hoops !== !state.rollbar) q.set('hoops', state.hoops ? 'on' : 'off');
-    if (!state.shielding) q.set('shielding', 'off');
+    // hoops / shielding are retired as URL params; always derived / forced on.
     if (!sameBg(state.bg, BG_DEFAULT)) q.set('bg', state.bg.join(','));
     if (state.floor) q.set('floor', 'on');
     if (state.spoiler !== 'none') q.set('spoiler', state.spoiler);
@@ -109,9 +109,10 @@ export function createMods(car, initial = STOCK, scene = {}) {
 
     function set(patch, { url = true } = {}) {
         const next = { ...state, ...patch };
-        // The stock covers sit where the new main hoop goes: swap them together
-        // unless the caller says otherwise.
-        if ('rollbar' in patch && !('hoops' in patch)) next.hoops = !next.rollbar;
+        // The stock covers sit where the new main hoop goes: always hide them
+        // with the bar. Bulkhead trim stays on until its UI comes back.
+        next.hoops = !next.rollbar;
+        next.shielding = true;
         if ('color' in patch) next.color = colorKey(patch.color, BAR_PRESETS) ?? state.color;
         if ('spoiler' in patch && !SPOILER_KINDS.includes(next.spoiler)) next.spoiler = state.spoiler;
         if ('seats' in patch) next.seats = colorKey(patch.seats ?? SEAT_DEFAULT, SEAT_PRESETS) ?? state.seats;

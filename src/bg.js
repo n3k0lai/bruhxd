@@ -2,8 +2,8 @@ import * as THREE from 'three';
 
 let gradient; // Declare gradient variable to access it in the resize function
 
-// Default stops (the original red -> gold). Hex strings without '#'.
-export const BG_DEFAULT = Object.freeze(['ff0000', 'ffd600']);
+// Default stops (sky blue -> mint green). Hex strings without '#'.
+export const BG_DEFAULT = Object.freeze(['99c1f1', '8ff0a4']);
 
 // Set the two gradient stops ('rrggbb' strings, or null for the default).
 // Raw values, no colour management: the shader writes them straight out, so

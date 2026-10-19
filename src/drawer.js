@@ -14,10 +14,10 @@ export function createDrawer({ container, mods }) {
     const head = el('header');
     head.append(el('h2', {}, 'MIIA · MODS'), el('button', { type: 'button', class: 'close', 'aria-label': 'Close' }, '×'));
 
+    // Hoop covers follow the roll bar (no separate toggle). Bulkhead trim
+    // (`shielding`) stays on; its drawer toggle is deferred for later.
     const toggles = {
         rollbar: toggle('Roll bar', 'Hard Dog ND Sport mock-up'),
-        hoops: toggle('Stock hoop covers', 'and wind blocker'),
-        shielding: toggle('Bulkhead trim', 'plastic shielding behind the seats'),
     };
     const barColor = swatches('Bar colour', BAR_PRESETS, (v) => mods.set({ color: v }));
     const mirrorToggle = toggle('Pearl mirror caps', 'body pearl instead of gloss black');
@@ -73,7 +73,7 @@ export function createDrawer({ container, mods }) {
     floorToggle.input.addEventListener('change', () => mods.set({ floor: floorToggle.input.checked }));
 
     const body = el('div', { class: 'body' });
-    body.append(el('h3', {}, 'Car'), toggles.rollbar.row, toggles.hoops.row, toggles.shielding.row, barColor.box,
+    body.append(el('h3', {}, 'Car'), toggles.rollbar.row, barColor.box,
         seatColor.box, mirrorToggle.row,
         el('h3', {}, 'Body'), spoilerBox,
         sceneHead, floorToggle.row, bgBox, reset, copy);
